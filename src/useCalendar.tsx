@@ -1,6 +1,9 @@
 import { addDays, addMonths, addWeeks, startOfMonth, startOfWeek, subDays, subMonths, subWeeks } from "date-fns";
 import { type WeekDayType, CalendarViewType } from "./models";
-import { createSignal } from "solid-js";
+import { createSignal, createMemo } from "solid-js";
+import { genId, range, withDateProps, withKey, withKeyProps } from "./utils";
+import { pipeWith } from "./utils/pipe";
+import { createCalendarInfo } from "./createCalendarInfo";
 
 export interface UseCalendarOptions {
   defaultDate?: Date | number | string;
@@ -13,16 +16,16 @@ export function useCalendar({
   defaultWeekStart = 0,
   defaultViewType = CalendarViewType.Month,
 }: UseCalendarOptions = {}) {
-  const baseDate = defaultDate != null ? new Date(defaultDate) : new Date();
-  // const baseDate = () => {
-  //   return defaultDate != null ? new Date(defaultDate) : new Date();
-  // };
+  // const baseDate = defaultDate != null ? new Date(defaultDate) : new Date();
+  const baseDate = createMemo(() => {
+    return defaultDate != null ? new Date(defaultDate) : new Date();
+  });
 
   const [weekStartsOn, setWeekStartsOn] = createSignal(defaultWeekStart);
-  const [cursorDate, setCursorDate] = createSignal(baseDate);
+  const [cursorDate, setCursorDate] = createSignal(baseDate());
   const [viewType, setViewType] = createSignal(defaultViewType);
 
-  const calendar = createCalendarInfo(cursorDate, { weekStartsOn: weekStartsOn() });
+  const calendar = createCalendarInfo(cursorDate(), { weekStartsOn: weekStartsOn() });
   const { weekdays, weeksInMonth, today, getDateCellByIndex } = calendar;
 
   const getHeaders = (viewType: CalendarViewType) => {
@@ -34,19 +37,19 @@ export function useCalendar({
         };
       default:
         return {
-          weekdays: withKey([{ value: cursorDate }], "weekdays"),
+          weekdays: withKey([{ value: cursorDate() }], "weekdays"),
         };
     }
   };
 
   const createMatrix = (weeksInMonth: number) => ({
-    value: arrayOf(weeksInMonth).map((weekIndex) => {
+    value: range(weeksInMonth).map((weekIndex) => {
       return {
-        key: generateId("weeks"),
-        value: arrayOf(7).map((dayIndex) => {
+        key: genId("weeks"),
+        value: range(7).map((dayIndex) => {
           return pipeWith(
             getDateCellByIndex(weekIndex, dayIndex),
-            withDateProps(baseDate, cursorDate),
+            withDateProps(baseDate(), cursorDate()),
             withKeyProps("days"),
           );
         }),
@@ -74,7 +77,7 @@ export function useCalendar({
     }[viewType];
   };
 
-  const setNext = () => {
+  const setNext = createMemo(() => {
     switch (viewType()) {
       case CalendarViewType.Month:
         return (date: Date) => addMonths(startOfMonth(date), 1);
@@ -83,9 +86,9 @@ export function useCalendar({
       case CalendarViewType.Day:
         return (date: Date) => addDays(date, 1);
     }
-  };
+  });
 
-  const setPrev = () => {
+  const setPrev = createMemo(() => {
     switch (viewType()) {
       case CalendarViewType.Month:
         return (date: Date) => subMonths(startOfMonth(date), 1);
@@ -94,15 +97,15 @@ export function useCalendar({
       case CalendarViewType.Day:
         return (date: Date) => subDays(date, 1);
     }
-  };
+  });
 
-  return () => ({
+  return {
       ...calendar,
       headers: getHeaders(viewType()),
       body: getBody(viewType()),
       navigation: {
-        toNext: () => setCursorDate((date) => setNext(date)),
-        toPrev: () => setCursorDate((date) => setPrev(date)),
+        toNext: () => setCursorDate((date) => setNext()(date)),
+        toPrev: () => setCursorDate((date) => setPrev()(date)),
         setToday: () => setCursorDate(new Date()),
         setDate: (date: Date) => setCursorDate(date),
       },
@@ -117,6 +120,6 @@ export function useCalendar({
         showWeekView: () => setViewType(CalendarViewType.Week),
         showDayView: () => setViewType(CalendarViewType.Day),
       },
-    });
+    };
 }
 
