@@ -1,15 +1,30 @@
 import { TextAttributes } from "@opentui/core";
-import { render } from "@opentui/solid";
+import { render, useKeyHandler } from "@opentui/solid";
 import { For } from "solid-js"
 import { useCalendar } from "../useCalendar";
 import { format } from "date-fns";
 
 
 render(() => {
-  const { headers, cursorDate, body } = useCalendar();
+  const { headers, cursorDate, body, navigation } = useCalendar();
+
+  useKeyHandler((key) => {
+    switch (key.name) {
+      case "l":
+        console.log("l pressed")
+        navigation.toNext();
+        break
+      case "h":
+        console.log("h pressed")
+        navigation.toPrev();
+        break
+      case "q":
+        process.exit(0)
+    }
+  })
 
   return (
-    <box flexGrow={1}>
+    <box>
       <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
         <text attributes={TextAttributes.NONE}>{format(cursorDate, "MMM yyyy")}</text>
         <text>right aligned</text>
@@ -23,22 +38,34 @@ render(() => {
         </For>
       </box>
 
-      <box borderStyle="rounded" border flexGrow={1}>
+      <box flexGrow={1}>
         <For each={body.value}>
           {(week) => {
-            const { key, value: days } = week;
+            const { value: days } = week;
 
             return (
-              <box flexDirection="row" justifyContent="space-between">
-                {/* <text>{key}</text> */}
-
+              <box flexGrow={1} flexDirection="row">
                 <For each={days}>
                   {(day) => {
-                    const { key, date, isCurrentDate, isCurrentMonth } = day;
+                    const { date, isCurrentDate, isCurrentMonth } = day;
 
                     return (
-                      <box style={{ backgroundColor: isCurrentDate ? "#ddd" : isCurrentMonth ? "#00ff00" : "#cc0000" }}>
-                        <text>{date}</text>
+                      <box flexGrow={1}
+                        style={{
+                          minWidth: 15,
+                          borderStyle: 'single',
+                          border: true,
+                          borderColor: isCurrentDate ? 'magenta' : isCurrentMonth ? 'white' : 'gray'
+                        }}>
+                        <text attributes={
+                          isCurrentDate
+                            ? TextAttributes.UNDERLINE | TextAttributes.BOLD
+                            : isCurrentMonth
+                              ? TextAttributes.NONE
+                              : TextAttributes.DIM}
+                        >
+                          {date}
+                        </text>
                       </box>
                     )
                   }}
