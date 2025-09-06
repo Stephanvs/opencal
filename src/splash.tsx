@@ -8,4 +8,6 @@ render(() => (
       <text attributes={TextAttributes.DIM}>What will you schedule?</text>
     </box>
   </box>
-));
+), {
+  exitOnCtrlC: true,
+});
