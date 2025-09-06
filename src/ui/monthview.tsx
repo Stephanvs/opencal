@@ -1,25 +1,47 @@
 import { TextAttributes } from "@opentui/core";
-import { render, useKeyHandler } from "@opentui/solid";
+import { render, useKeyHandler, useRenderer } from "@opentui/solid";
 import { For } from "solid-js"
 import { useCalendar } from "../useCalendar";
 import { format } from "date-fns";
-
+import { CalendarViewType } from "../models";
 
 render(() => {
-  const { headers, cursorDate, body, navigation } = useCalendar();
+  const { headers, cursorDate, body, navigation, view } = useCalendar();
+  const renderer = useRenderer()
 
   useKeyHandler((key) => {
+
+    if (key.name === "`" || key.name === '"') {
+      renderer.console.toggle();
+    }
+
     switch (key.name) {
+      case "t":
+        var newDate = navigation.setToday();
+        console.log("t pressed", newDate);
+        break;
       case "l":
-        console.log("l pressed")
-        navigation.toNext();
-        break
+        var newDate = navigation.toNext();
+        console.log("l pressed", newDate);
+        break;
       case "h":
-        console.log("h pressed")
-        navigation.toPrev();
-        break
+        var newDate = navigation.toPrev();
+        console.log("h pressed", newDate)
+        break;
+      case "m":
+        view.setViewType(CalendarViewType.Month);
+        console.log('switched to month view');
+        break;
+      case "w":
+        view.setViewType(CalendarViewType.Week);
+        console.log('switched to week view');
+        break;
+      case "d":
+        view.setViewType(CalendarViewType.Day);
+        console.log('switched to day view');
+        break;
       case "q":
-        process.exit(0)
+        process.exit(0);
     }
   })
 
@@ -27,11 +49,12 @@ render(() => {
     <box>
       <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
         <text attributes={TextAttributes.NONE}>{format(cursorDate, "MMM yyyy")}</text>
-        <text>right aligned</text>
+        <text>{view.type}</text>
+        <text>{format(cursorDate, "dd-MM-yyyy")}</text>
       </box>
 
       <box borderStyle="rounded" flexDirection="row" justifyContent="space-between">
-        <For each={headers.weekdays}>
+        <For each={headers().weekdays}>
           {({ value }) => (
             <text>{format(value, "E")}</text>
           )}
@@ -39,7 +62,7 @@ render(() => {
       </box>
 
       <box flexGrow={1}>
-        <For each={body.value}>
+        <For each={body().value}>
           {(week) => {
             const { value: days } = week;
 
@@ -47,15 +70,21 @@ render(() => {
               <box flexGrow={1} flexDirection="row">
                 <For each={days}>
                   {(day) => {
-                    const { date, isCurrentDate, isCurrentMonth } = day;
+                    const { date, isCurrentDate, isCurrentMonth, isWeekend } = day;
 
                     return (
-                      <box flexGrow={1}
+                      <box
+                        flexGrow={1}
+                        margin={0}
                         style={{
-                          minWidth: 15,
+                          minWidth: 5,
                           borderStyle: 'single',
                           border: true,
-                          borderColor: isCurrentDate ? 'magenta' : isCurrentMonth ? 'white' : 'gray'
+                          borderColor: isCurrentDate
+                            ? 'yellow'
+                            : isCurrentMonth
+                              ? 'white'
+                              : 'gray'
                         }}>
                         <text attributes={
                           isCurrentDate

@@ -25,15 +25,18 @@ export function useCalendar({
   const [cursorDate, setCursorDate] = createSignal(baseDate());
   const [viewType, setViewType] = createSignal(defaultViewType);
 
-  const calendar = createCalendarInfo(cursorDate(), { weekStartsOn: weekStartsOn() });
-  const { weekdays, weeksInMonth, today, getDateCellByIndex } = calendar;
+  const calendar = createMemo(() => createCalendarInfo(cursorDate(), { weekStartsOn: weekStartsOn() }));
+  const weekdays = () => calendar().weekdays;
+  const weeksInMonth = () => calendar().weeksInMonth;
+  const today = () => calendar().today;
+  const getDateCellByIndex = (weekIndex: number, dayIndex: number) => calendar().getDateCellByIndex(weekIndex, dayIndex);
 
   const getHeaders = (viewType: CalendarViewType) => {
     switch (viewType) {
       case CalendarViewType.Month:
       case CalendarViewType.Week:
         return {
-          weekdays: withKey(weekdays, "weekdays"),
+          weekdays: withKey(weekdays(), "weekdays"),
         };
       default:
         return {
@@ -58,8 +61,8 @@ export function useCalendar({
   });
 
   const getBody = (viewType: CalendarViewType) => {
-    const matrix = createMatrix(weeksInMonth);
-    const { weekIndex, dateIndex } = today;
+    const matrix = createMatrix(weeksInMonth());
+    const { weekIndex, dateIndex } = today();
 
     return {
       [CalendarViewType.Month]: matrix,
@@ -100,9 +103,9 @@ export function useCalendar({
   });
 
   return {
-      ...calendar,
-      headers: getHeaders(viewType()),
-      body: getBody(viewType()),
+      ...calendar(),
+      headers: createMemo(() => getHeaders(viewType())),
+      body: createMemo(() => getBody(viewType())),
       navigation: {
         toNext: () => setCursorDate((date) => setNext()(date)),
         toPrev: () => setCursorDate((date) => setPrev()(date)),
@@ -110,7 +113,7 @@ export function useCalendar({
         setDate: (date: Date) => setCursorDate(date),
       },
       view: {
-        type: viewType,
+        type: viewType(),
         setViewType,
         setWeekStartsOn,
         isMonthView: viewType() === CalendarViewType.Month,
