@@ -1,0 +1,16 @@
+export enum CalendarAction {
+  NavigatePrevious = 'navigatePrevious',
+  NavigateNext = 'navigateNext',
+  NavigateUp = 'navigateUp',
+  NavigateDown = 'navigateDown',
+  NavigateLeft = 'navigateLeft',
+  NavigateRight = 'navigateRight',
+  CreateAppointment = 'createAppointment',
+  EditAppointment = 'editAppointment',
+  DeleteAppointment = 'deleteAppointment',
+  SwitchToMonthView = 'switchToMonthView',
+  SwitchToWeekView = 'switchToWeekView',
+  SwitchToDayView = 'switchToDayView',
+  ToggleVimMode = 'toggleVimMode',
+  Quit = 'quit',
+}
