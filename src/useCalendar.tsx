@@ -102,8 +102,13 @@ export function useCalendar({
     }
   });
 
+  const viewTypeMemo = createMemo(() => viewType());
+
+  const { cursorDate: _, ...cal } = calendar();
+
   return {
-      ...calendar(),
+      cursorDate,
+      ...cal,
       headers: createMemo(() => getHeaders(viewType())),
       body: createMemo(() => getBody(viewType())),
       navigation: {
@@ -113,12 +118,12 @@ export function useCalendar({
         setDate: (date: Date) => setCursorDate(date),
       },
       view: {
-        type: viewType(),
+        type: viewTypeMemo,
         setViewType,
         setWeekStartsOn,
-        isMonthView: viewType() === CalendarViewType.Month,
-        isWeekView: viewType() === CalendarViewType.Week,
-        isDayView: viewType() === CalendarViewType.Day,
+        isMonthView: createMemo(() => viewTypeMemo() === CalendarViewType.Month),
+        isWeekView: createMemo(() => viewTypeMemo() === CalendarViewType.Week),
+        isDayView: createMemo(() => viewTypeMemo() === CalendarViewType.Day),
         showMonthView: () => setViewType(CalendarViewType.Month),
         showWeekView: () => setViewType(CalendarViewType.Week),
         showDayView: () => setViewType(CalendarViewType.Day),

@@ -1,13 +1,15 @@
 import { TextAttributes } from "@opentui/core";
 import { render, useKeyHandler, useRenderer } from "@opentui/solid";
-import { For } from "solid-js"
+import { For, createMemo } from "solid-js"
 import { useCalendar } from "../useCalendar";
-import { format } from "date-fns";
-import { CalendarViewType } from "../models";
+import { format, addDays, subDays } from "date-fns";
 
 render(() => {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
   const renderer = useRenderer()
+
+  const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
+  const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
 
   useKeyHandler((key) => {
 
@@ -28,16 +30,24 @@ render(() => {
         var newDate = navigation.toPrev();
         console.log("h pressed", newDate)
         break;
+      case "j":
+        navigation.setDate(addDays(cursorDate(), 1));
+        console.log('next day', cursorDate());
+        break;
+      case "k":
+        navigation.setDate(subDays(cursorDate(), 1));
+        console.log('next day', cursorDate());
+        break;
       case "m":
-        view.setViewType(CalendarViewType.Month);
+        view.showMonthView();
         console.log('switched to month view');
         break;
       case "w":
-        view.setViewType(CalendarViewType.Week);
+        view.showWeekView();
         console.log('switched to week view');
         break;
       case "d":
-        view.setViewType(CalendarViewType.Day);
+        view.showDayView();
         console.log('switched to day view');
         break;
       case "q":
@@ -48,9 +58,9 @@ render(() => {
   return (
     <box>
       <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
-        <text attributes={TextAttributes.NONE}>{format(cursorDate, "MMM yyyy")}</text>
+        <text attributes={TextAttributes.NONE}>{formattedMonth()}</text>
         <text>{view.type}</text>
-        <text>{format(cursorDate, "dd-MM-yyyy")}</text>
+        <text>{formattedDate()}</text>
       </box>
 
       <box borderStyle="rounded" flexDirection="row" justifyContent="space-between">
@@ -78,7 +88,9 @@ render(() => {
                         margin={0}
                         style={{
                           minWidth: 5,
-                          borderStyle: 'single',
+                          borderStyle: date === cursorDate() 
+                            ? 'double'
+                            : 'single',
                           border: true,
                           borderColor: isCurrentDate
                             ? 'yellow'
