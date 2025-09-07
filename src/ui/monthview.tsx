@@ -4,6 +4,7 @@ import { For, createMemo } from "solid-js"
 import { useCalendar } from "../useCalendar";
 import { format, addDays, subDays } from "date-fns";
 import { isSameDate } from "../utils";
+import ViewSelector from "./components/view-selector";
 
 render(() => {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -60,7 +61,8 @@ render(() => {
     <box>
       <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
         <text attributes={TextAttributes.NONE}>{formattedMonth()}</text>
-        <text>{view.type()}</text>
+        {/* <text>{view.type()}</text> */}
+        <ViewSelector />
         <text>{formattedDate()}</text>
       </box>
 
