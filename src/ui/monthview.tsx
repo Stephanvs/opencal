@@ -3,6 +3,7 @@ import { render, useKeyHandler, useRenderer } from "@opentui/solid";
 import { For, createMemo } from "solid-js"
 import { useCalendar } from "../useCalendar";
 import { format, addDays, subDays } from "date-fns";
+import { isSameDate } from "../utils";
 
 render(() => {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -80,18 +81,19 @@ render(() => {
               <box flexGrow={1} flexDirection="row">
                 <For each={days}>
                   {(day) => {
-                    const { date, isCurrentDate, isCurrentMonth, isWeekend } = day;
+                    const { date, isCurrentDate, isCurrentMonth } = day;
+
+                    console.log('date', day.value, 'cursorDate', cursorDate());
 
                     return (
                       <box
                         flexGrow={1}
-                        margin={0}
                         style={{
                           minWidth: 5,
-                          borderStyle: date === cursorDate() 
+                          border: true,
+                          borderStyle: isSameDate(day.value, cursorDate())
                             ? 'double'
                             : 'single',
-                          border: true,
                           borderColor: isCurrentDate
                             ? 'yellow'
                             : isCurrentMonth
