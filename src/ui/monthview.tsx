@@ -62,7 +62,7 @@ render(() => {
       <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
         <text attributes={TextAttributes.NONE}>{formattedMonth()}</text>
         {/* <text>{view.type()}</text> */}
-        <ViewSelector />
+        <ViewSelector currentViewMode={view.type()} />
         <text>{formattedDate()}</text>
       </box>
 
