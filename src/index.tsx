@@ -1,10 +1,14 @@
 import { render } from "@opentui/solid";
-import { App } from "./app";
 
 render(
-    <App />,
-    {
-      consoleOptions: {
-        titleBarColor: "#cc33ff"
+  () => <App />,
+  {
+    consoleOptions: {
+      titleBarColor: "#cc33ff"
     }
+  }
 );
+
+function App() {
+    return (<text>Hello, World!</text>);
+};
