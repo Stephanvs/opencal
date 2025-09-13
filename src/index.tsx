@@ -4,12 +4,14 @@ import { render, useKeyHandler, useRenderer, useTerminalDimensions } from "@open
 import { Home } from "./ui/home";
 import { TextAttributes } from "@opentui/core";
 import { Theme } from "./context/theme";
-import { useDialog } from "./ui/components/dialog";
+import { DialogProvider, useDialog } from "./ui/components/dialog";
 
 render(
   () =>
     <RouteProvider>
-      <App />
+      <DialogProvider>
+        <App />
+      </DialogProvider>
     </RouteProvider>,
   {
     consoleOptions: {
@@ -58,7 +60,7 @@ function App() {
           </box>
           <box paddingLeft={1} paddingRight={1}>
             <text>hello</text>
-          {/*   <text fg={Theme.textMuted}>{process.cwd().replace(Global.Path.home, "~")}</text> */}
+            {/*   <text fg={Theme.textMuted}>{process.cwd().replace(Global.Path.home, "~")}</text> */}
           </box>
         </box>
         <box flexDirection="row">
@@ -67,7 +69,7 @@ function App() {
           </text>
           {/* <text fg={local.agent.color(local.agent.current().name)}>┃</text> */}
           {/* <text bg={local.agent.color(local.agent.current().name)} fg={Theme.background}> */}
-            {" "}
+          {" "}
           {/*   {bold(local.agent.current().name.toUpperCase())} AGENT{" "} */}
           {/* </text> */}
         </box>
