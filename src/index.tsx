@@ -1,6 +1,6 @@
 import { createEffect, Match, Switch } from "solid-js";
 import { RouteProvider, useRoute } from "./context/route"
-import { render, useKeyHandler, useRenderer, useTerminalDimensions } from "@opentui/solid";
+import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid";
 import { Home } from "./ui/home";
 import { TextAttributes } from "@opentui/core";
 import { Theme } from "./context/theme";
@@ -26,7 +26,7 @@ function App() {
   const renderer = useRenderer()
   const dialog = useDialog()
 
-  useKeyHandler(async (evt) => {
+  useKeyboard(async (evt) => {
     if (evt.meta && evt.name === "t") {
       renderer.toggleDebugOverlay()
       return

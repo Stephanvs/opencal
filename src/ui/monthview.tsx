@@ -1,5 +1,5 @@
 import { TextAttributes } from "@opentui/core";
-import { useKeyHandler, useRenderer } from "@opentui/solid";
+import { useKeyboard, useRenderer } from "@opentui/solid";
 import { For, createMemo } from "solid-js"
 import { useCalendar } from "../useCalendar";
 import { format, addDays, subDays } from "date-fns";
@@ -13,7 +13,7 @@ export function CalendarView() {
   const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
 
-  useKeyHandler(async (key) => {
+  useKeyboard(async (key) => {
 
     if (key.name === "`" || key.name === '"') {
       renderer.console.toggle();

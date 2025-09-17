@@ -1,4 +1,4 @@
-import { useKeyHandler, useTerminalDimensions } from "@opentui/solid"
+import { useKeyboard, useTerminalDimensions } from "@opentui/solid"
 import { createContext, For, Show, useContext, type JSX, type ParentProps } from "solid-js"
 import { Theme } from "../../context/theme"
 import { RGBA } from "@opentui/core"
@@ -55,7 +55,7 @@ function init() {
     size: "medium" as "medium" | "large",
   })
 
-  useKeyHandler((evt) => {
+  useKeyboard((evt) => {
     if (evt.name === "escape") {
       setStore("stack", store.stack.slice(0, -1))
     }
