@@ -1,5 +1,10 @@
-# react
+# OpenCal
+Inspired by many great TUI apps recently, opencal is a TUI for managing your calendars.
 
+# Installation
+tbd
+
+# Usage
 To install dependencies:
 
 ```bash
@@ -12,4 +17,3 @@ To run:
 bun run src/index.tsx
 ```
 
-This project was created using `bun init` in bun v1.2.20. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
