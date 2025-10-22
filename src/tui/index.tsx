@@ -1,10 +1,10 @@
 import { createEffect, Match, Switch } from "solid-js";
 import { RouteProvider, useRoute } from "./context/route"
 import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid";
-import { Home } from "./ui/home";
+import { Home } from "./home";
 import { TextAttributes } from "@opentui/core";
 import { Theme } from "./context/theme";
-import { DialogProvider, useDialog } from "./ui/components/dialog";
+import { DialogProvider, useDialog } from "./components/dialog";
 import { AuthProvider, useAuth } from "./context/auth";
 
 render(

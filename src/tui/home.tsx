@@ -1,5 +1,4 @@
-// import { Installation } from "../../../installation"
-import { Theme } from "../context/theme"
+import { Theme } from "./context/theme"
 import { bold, fg } from "@opentui/core"
 import { CalendarView } from "./monthview";
 
@@ -33,18 +32,6 @@ function Logo() {
     <box>
       <box flexDirection="row">
         <ascii_font text="opencal" />
-      {/*   <text fg={Theme.textMuted}>{"█▀▀█ █▀▀█ █▀▀ █▀▀▄"}</text> */}
-      {/*   <text fg={Theme.text} attributes={TextAttributes.BOLD}> */}
-      {/*     {" █▀▀ █▀▀█ █▀▀▄ █▀▀"} */}
-      {/*   </text> */}
-      {/* </box> */}
-      {/* <box flexDirection="row"> */}
-      {/*   <text fg={Theme.textMuted}>{`█░░█ █░░█ █▀▀ █░░█`}</text> */}
-      {/*   <text fg={Theme.text}>{` █░░ █░░█ █░░█ █▀▀`}</text> */}
-      {/* </box> */}
-      {/* <box flexDirection="row"> */}
-      {/*   <text fg={Theme.textMuted}>{`▀▀▀▀ █▀▀▀ ▀▀▀ ▀  ▀`}</text> */}
-      {/*   <text fg={Theme.text}>{` ▀▀▀ ▀▀▀▀ ▀▀▀  ▀▀▀`}</text> */}
       </box>
       <box flexDirection="row" justifyContent="flex-end">
         {/* <text fg={Theme.textMuted}>{Installation.VERSION}</text> */}
