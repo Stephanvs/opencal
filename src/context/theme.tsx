@@ -1,4 +1,4 @@
-const OPENCODE_THEME = {
+const OPENCAL_THEME = {
   primary: {
     dark: "#fab283",
     light: "#3b7dd8",
@@ -230,7 +230,7 @@ type Theme = {
   diffAddedLineNumberBg: string
   diffRemovedLineNumberBg: string
   markdownText: string
-  markdownHeading: {}
+  markdownHeading: string
   markdownLink: string
   markdownLinkText: string
   markdownCode: string
@@ -239,7 +239,7 @@ type Theme = {
   markdownStrong: string
   markdownHorizontalRule: string
   markdownListItem: string
-  markdownListEnumeration: {}
+  markdownListEnumeration: string
   markdownImage: string
   markdownImageText: string
   markdownCodeBlock: string
@@ -254,7 +254,7 @@ type Theme = {
   syntaxPunctuation: string
 }
 
-export const Theme = Object.entries(OPENCODE_THEME).reduce((acc, [key, value]) => {
+export const Theme = Object.entries(OPENCAL_THEME).reduce((acc, [key, value]) => {
   acc[key as keyof Theme] = value.dark
   return acc
 }, {} as Theme)

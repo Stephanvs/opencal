@@ -32,7 +32,6 @@ const ctx = createContext<RouteContext>()
 
 export function RouteProvider(props: ParentProps) {
   const value = init()
-  // @ts-ignore
   return <ctx.Provider value={value}>{props.children}</ctx.Provider>
 }
 

@@ -5,14 +5,17 @@ import { Home } from "./ui/home";
 import { TextAttributes } from "@opentui/core";
 import { Theme } from "./context/theme";
 import { DialogProvider, useDialog } from "./ui/components/dialog";
+import { AuthProvider, useAuth } from "./context/auth";
 
 render(
   () =>
-    <RouteProvider>
-      <DialogProvider>
-        <App />
-      </DialogProvider>
-    </RouteProvider>,
+    <AuthProvider>
+      <RouteProvider>
+        <DialogProvider>
+          <App />
+        </DialogProvider>
+      </RouteProvider>
+    </AuthProvider>,
   {
     consoleOptions: {
       titleBarColor: "#cc33ff"
@@ -21,6 +24,7 @@ render(
 );
 
 function App() {
+  const auth = useAuth();
   const route = useRoute()
   const dimensions = useTerminalDimensions()
   const renderer = useRenderer()

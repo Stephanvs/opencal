@@ -77,12 +77,14 @@ export function CalendarView() {
       <box flexGrow={1}>
         <For each={body().value}>
           {(week) => {
+            if (!week) return null;
             const { value: days } = week;
 
             return (
               <box flexGrow={1} flexDirection="row">
                 <For each={days}>
                   {(day) => {
+                    if (!day) return null;
                     const { date, isCurrentDate, isCurrentMonth } = day;
 
                     console.log('date', day.value, 'cursorDate', cursorDate());
