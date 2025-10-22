@@ -1,10 +1,12 @@
-# OpenCal
+### OpenCal
 Inspired by many great TUI apps recently, opencal is a TUI for managing your calendars.
 
-# Installation
+---
+
+### Installation
 tbd
 
-# Usage
+### Usage
 To install dependencies:
 
 ```bash
