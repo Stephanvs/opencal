@@ -5,23 +5,38 @@
  */
 
 import type { ArgumentsCamelCase } from 'yargs';
+import { deleteProviderTokens, deleteAuthStorage, hasProviderAuth, hasAnyAuth, type Provider } from '../../../core/auth';
 
 interface LogoutArgs {
   provider?: string;
 }
 
 export async function logoutCommand(argv: ArgumentsCamelCase<LogoutArgs>) {
-  const provider = argv.provider;
+  const provider = argv.provider as Provider | undefined;
 
-  if (provider) {
-    console.log(`\n🔓 Logging out from ${provider}...\n`);
-  } else {
-    console.log('\n🔓 Logging out from all providers...\n');
+  if (!hasAnyAuth()) {
+    console.log('\nNo authentication data found.');
+    console.log('Nothing to logout from.\n');
+    process.exit(0);
   }
 
-  // TODO: Remove credentials from auth.json (Issue #2)
-  console.log('⚠️  Logout not yet implemented.');
-  console.log('   Credentials will be removed in a future update.\n');
+  if (provider) {
+    // Logout specific provider
+    if (!hasProviderAuth(provider)) {
+      console.log(`\nNot authenticated with ${provider}.`);
+      console.log('Run "opencal auth list" to see authenticated providers.\n');
+      process.exit(1);
+    }
+
+    deleteProviderTokens(provider);
+    console.log(`\nLogged out from ${provider}.`);
+    console.log('Tokens have been removed.\n');
+  } else {
+    // Logout all providers
+    deleteAuthStorage();
+    console.log('\nLogged out from all providers.');
+    console.log('All tokens have been removed.\n');
+  }
 
   process.exit(0);
 }
