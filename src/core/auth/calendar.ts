@@ -4,21 +4,8 @@
  * Provides functions to interact with Google Calendar API.
  */
 
-import { google } from 'googleapis';
 import type { TokenData } from './types';
-
-/**
- * Create a Google Calendar API client with authenticated credentials
- */
-export function createCalendarClient(token: TokenData) {
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({
-    access_token: token.access,
-    refresh_token: token.refresh,
-  });
-
-  return google.calendar({ version: 'v3', auth: oauth2Client });
-}
+import { createCalendarClient } from './oauth-flow';
 
 /**
  * Fetch calendar events for a given time range

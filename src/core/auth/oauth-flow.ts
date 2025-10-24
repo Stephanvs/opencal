@@ -18,16 +18,13 @@ import { generatePKCE } from "@openauthjs/openauth/pkce";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-/**
- * Result of OAuth flow
- */
 export interface OAuthFlowResult {
   success: boolean;
   tokens?: TokenData;
   error?: string;
 }
 
-const CLIENT_ID = '725023205531-qi142osnns4o1n503hj0001lt9smf44d.apps.googleusercontent.com';
+export const CLIENT_ID = '725023205531-qi142osnns4o1n503hj0001lt9smf44d.apps.googleusercontent.com';
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/calendar.events',
@@ -41,6 +38,19 @@ export function createGoogleClient() {
       fetchImplementation: fetch
     }
   });
+}
+
+/**
+ * Create a Google Calendar API client with authenticated credentials
+ */
+export function createCalendarClient(token: TokenData) {
+  const oauth2Client = createGoogleClient();
+  oauth2Client.setCredentials({
+    access_token: token.access,
+    refresh_token: token.refresh,
+  });
+
+  return google.calendar({ version: 'v3', auth: oauth2Client });
 }
 /**
  * Start OAuth flow for Google using PKCE with local server
