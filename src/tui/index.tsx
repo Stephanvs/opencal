@@ -34,7 +34,7 @@ function App() {
   useKeyboard(async (evt) => {
     if (evt.name === "`") {
       renderer.console.toggle()
-      renderer.toggleDebugOverlay()
+      // renderer.toggleDebugOverlay()
       return
     }
   })
