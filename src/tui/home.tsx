@@ -1,5 +1,4 @@
-import { Theme } from "./context/theme"
-import { bold, fg } from "@opentui/core"
+import { Theme } from "./context/theme";
 import { CalendarView } from "./monthview";
 
 export function Home() {
@@ -11,19 +10,7 @@ export function Home() {
           <CalendarView />
         </box>
       </box>
-      {/* <box paddingTop={3} minWidth={75}> */}
-      {/*   <Prompt /> */}
-      {/* </box> */}
     </box>
-  )
-}
-
-function HelpRow(props: { children: string; slash: string }) {
-  return (
-    <text>
-      {bold(fg(Theme.primary)("/" + props.slash.padEnd(10, " ")))} {props.children.padEnd(15, " ")}{" "}
-      {fg(Theme.textMuted)("ctrl+x n")}
-    </text>
   )
 }
 
@@ -34,7 +21,7 @@ function Logo() {
         <ascii_font text="opencal" />
       </box>
       <box flexDirection="row" justifyContent="flex-end">
-        {/* <text fg={Theme.textMuted}>{Installation.VERSION}</text> */}
+        <text fg={Theme.textMuted}>todo</text>
       </box>
     </box>
   )
