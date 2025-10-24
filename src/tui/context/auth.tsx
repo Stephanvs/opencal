@@ -1,31 +1,92 @@
-import { createStore } from "solid-js/store"
-import { createContext, useContext, type ParentProps } from "solid-js"
-
-type JwtToken = {
-  access_token: string,
-  refresh_token: string,
-  scopes: string[],
-}
+import { createSignal } from "solid-js"
+import { createContext, useContext, type ParentProps, onMount } from "solid-js"
+import { createGoogleClient, getProviderTokens, saveProviderTokens } from '../../core/auth'
+import type { TokenData } from '../../core/auth/types'
 
 export type Auth =
   | { type: 'unauthorized' }
-  | { type: 'google', token: JwtToken }
+  | { type: 'google', token: TokenData }
+
+async function validateToken(token: TokenData): Promise<boolean> {
+  return token.expiryTimestamp > Date.now()
+}
+
+async function refreshToken(token: TokenData): Promise<TokenData | null> {
+  try {
+    const oauthClient = createGoogleClient();
+    oauthClient.setCredentials({
+      access_token: token.access,
+      refresh_token: token.refresh,
+    })
+
+    const { credentials } = await oauthClient.refreshAccessToken()
+    const refreshed: TokenData = {
+      access: credentials.access_token!,
+      refresh: credentials.refresh_token || token.refresh,
+      expiresIn: credentials.expiry_date
+        ? Math.floor((credentials.expiry_date - Date.now()) / 1000)
+        : 3600,
+      expiryTimestamp: credentials.expiry_date || Date.now() + 3600000,
+      scopes: token.scopes,
+    }
+    return refreshed
+  } catch (error) {
+    console.error('Failed to refresh token:', error)
+    return null
+  }
+}
 
 function init() {
-  const [authStore, setAuthStore] = createStore<Auth>({
+  const [auth, setAuth] = createSignal<Auth>({
     type: 'unauthorized'
+  })
+
+  // Load tokens on startup
+  onMount(async () => {
+    const tokens = getProviderTokens('google')
+    console.log('auth:onMount entry, tokens: ', tokens)
+    if (tokens?.tokens) {
+      const isValid = await validateToken(tokens.tokens)
+      if (isValid) {
+        console.log('auth:onMount isValid:', isValid)
+        setAuth({ type: 'google', token: tokens.tokens })
+      } else {
+        // Try to refresh
+        const refreshed = await refreshToken(tokens.tokens)
+        if (refreshed) {
+          setAuth({ type: 'google', token: refreshed })
+          saveProviderTokens('google', { type: 'oauth', tokens: refreshed })
+        }
+      }
+    }
   })
 
   return {
     get data() {
-      return authStore
+      return auth()
     },
-    google_login(token: JwtToken) {
+    google_login(token: TokenData) {
       console.log("google login", token)
-      setAuthStore({ type: 'google', token })
+      setAuth({ type: 'google', token })
+      saveProviderTokens('google', { type: 'oauth', tokens: token })
     },
     logout() {
-      setAuthStore({ type: 'unauthorized' })
+      setAuth({ type: 'unauthorized' })
+      // Note: Don't delete tokens here, as logout might be temporary
+    },
+    async refreshIfNeeded() {
+      const currentAuth = auth()
+      if (currentAuth.type === 'google') {
+        if (currentAuth.token.expiryTimestamp < Date.now()) {
+          const refreshed = await refreshToken(currentAuth.token)
+          if (refreshed) {
+            setAuth({ type: 'google', token: refreshed })
+            saveProviderTokens('google', { type: 'oauth', tokens: refreshed })
+          } else {
+            setAuth({ type: 'unauthorized' })
+          }
+        }
+      }
     },
   }
 }

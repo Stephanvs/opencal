@@ -18,8 +18,6 @@ import { generatePKCE } from "@openauthjs/openauth/pkce";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-
-
 /**
  * Result of OAuth flow
  */
@@ -35,20 +33,19 @@ const SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',
 ]
 
+export function createGoogleClient() {
+  return new google.auth.OAuth2({
+    client_id: CLIENT_ID,
+    redirectUri: "http://localhost:3000/auth/google/callback"
+  });
+}
 /**
  * Start OAuth flow for Google using PKCE with local server
  */
 export async function authorize(): Promise<OAuthFlowResult> {
   try {
     const pkce = await generatePKCE();
-
-    // Create OAuth2 client
-    const client = new google.auth.OAuth2({
-      client_id: CLIENT_ID,
-      redirectUri: "http://localhost:3000/auth/google/callback"
-    });
-
-    // Generate auth URL with PKCE
+    const client = createGoogleClient();
     const authUrl = client.generateAuthUrl({
       access_type: 'offline', // Get refresh token
       scope: SCOPES,
@@ -63,12 +60,10 @@ export async function authorize(): Promise<OAuthFlowResult> {
     console.log(authUrl);
     console.log('');
 
-    // Try to open browser
     await openBrowser(authUrl);
 
     // Start local server and wait for callback
     const code = await waitForOAuthCallback();
-
     const tokens = await exchangeCodeForTokens(client, code, pkce.verifier);
 
     return {
@@ -160,9 +155,9 @@ function waitForOAuthCallback(): Promise<string> {
 /**
  * Exchange authorization code for tokens
  */
-async function exchangeCodeForTokens(oauth2Client: OAuth2Client, code: string, verifier: string): Promise<TokenData> {
+async function exchangeCodeForTokens(oauthClient: OAuth2Client, code: string, verifier: string): Promise<TokenData> {
   try {
-    const result = await oauth2Client.getToken({
+    const result = await oauthClient.getToken({
       code,
       codeVerifier: verifier
     });

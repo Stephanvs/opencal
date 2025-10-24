@@ -6,6 +6,7 @@ import { TextAttributes } from "@opentui/core";
 import { Theme } from "./context/theme";
 import { DialogProvider, useDialog } from "./components/dialog";
 import { AuthProvider, useAuth } from "./context/auth";
+import { NotAuthenticated } from "./context/not-authenticated";
 
 render(
   () =>
@@ -45,6 +46,9 @@ function App() {
     <box width={dimensions().width} backgroundColor={Theme.background}>
       <box flexDirection="column" flexGrow={1}>
         <Switch>
+          <Match when={auth.data.type === 'unauthorized'}>
+            <NotAuthenticated />
+          </Match>
           {/* <Match when={route.data.type === "session"}> */}
           {/*   <Session /> */}
           {/* </Match> */}
