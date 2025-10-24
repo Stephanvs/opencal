@@ -36,7 +36,10 @@ const SCOPES = [
 export function createGoogleClient() {
   return new google.auth.OAuth2({
     client_id: CLIENT_ID,
-    redirectUri: "http://localhost:3000/auth/google/callback"
+    redirectUri: "http://localhost:3000/auth/google/callback",
+    transporterOptions: {
+      fetchImplementation: fetch
+    }
   });
 }
 /**
