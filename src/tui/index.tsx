@@ -32,7 +32,8 @@ function App() {
   const dialog = useDialog()
 
   useKeyboard(async (evt) => {
-    if (evt.meta && evt.name === "t") {
+    if (evt.name === "`") {
+      renderer.console.toggle()
       renderer.toggleDebugOverlay()
       return
     }
