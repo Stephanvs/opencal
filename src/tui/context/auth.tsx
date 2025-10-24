@@ -52,6 +52,7 @@ function init() {
         setAuth({ type: 'google', token: tokens.tokens })
       } else {
         // Try to refresh
+        console.log('refreshing token')
         const refreshed = await refreshToken(tokens.tokens)
         if (refreshed) {
           setAuth({ type: 'google', token: refreshed })
