@@ -64,18 +64,12 @@ function App() {
           </box>
           <box paddingLeft={1} paddingRight={1}>
             <text>hello</text>
-            {/*   <text fg={Theme.textMuted}>{process.cwd().replace(Global.Path.home, "~")}</text> */}
           </box>
         </box>
         <box flexDirection="row">
           <text paddingRight={1} fg={Theme.textMuted}>
             tab
           </text>
-          {/* <text fg={local.agent.color(local.agent.current().name)}>┃</text> */}
-          {/* <text bg={local.agent.color(local.agent.current().name)} fg={Theme.background}> */}
-          {" "}
-          {/*   {bold(local.agent.current().name.toUpperCase())} AGENT{" "} */}
-          {/* </text> */}
         </box>
       </box>
     </box>
