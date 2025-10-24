@@ -1,40 +1,25 @@
-import { useRenderer } from "@opentui/solid"
-import { createMemo, createSignal, onMount } from "solid-js"
-import { t, fg, bold, italic, underline } from "@opentui/core";
 import { CalendarViewType } from "../../models";
+import { t, underline } from "@opentui/core";
 
 const ViewSelector = (props: { currentViewMode: CalendarViewType }) => {
-  // const renderer = useRenderer()
-  //
-  // onMount(() => {
-  //   // renderer.setBackgroundColor("#fff")
-  // })
-  //
-  // const [nameValue, setNameValue] = createSignal("")
-  const [viewMode, setViewMode] = createSignal<CalendarViewType>(props.currentViewMode);
-
-  const r = () => {
-    return `[${viewMode() === CalendarViewType.Month
-        ? t`${underline("m")}`
-        : "m"}]onth | [${viewMode() === CalendarViewType.Week
-          ? underline("w")
-          : "w"}]eek | [${viewMode() === CalendarViewType.Day
-            ? underline("d")
-            : "d"}]ay`;
-  };
+  const views = [
+    { type: CalendarViewType.Month, shortcut: 'm', label: 'onth' },
+    { type: CalendarViewType.Week, shortcut: 'w', label: 'eek' },
+    { type: CalendarViewType.Day, shortcut: 'd', label: 'ay' },
+  ];
 
   return (
-    <box>
-      <text>
-        {r()}
-      </text>
+    <box flexDirection="row" gap={1}>
+      {views.map(view => (
+        <text>
+          {props.currentViewMode === view.type 
+            ? t`[${underline(view.shortcut)}]${view.label}`
+            : `[${view.shortcut}]${view.label}`
+          }
+        </text>
+      ))}
     </box>
-
-    // <box height={4} border>
-    //   <text>Name: {nameValue()}</text>
-    //   <input focused onInput={(value) => setNameValue(value)} />
-    // </box>
-  )
-}
+  );
+};
 
 export default ViewSelector;
