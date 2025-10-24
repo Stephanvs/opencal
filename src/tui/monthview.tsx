@@ -1,10 +1,13 @@
 import { TextAttributes } from "@opentui/core";
 import { useKeyboard, useRenderer } from "@opentui/solid";
-import { For, createMemo } from "solid-js"
+import { For, createMemo, createResource } from "solid-js"
 import { useCalendar } from "../useCalendar";
-import { format, addDays, subDays } from "date-fns";
+import { format, addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay } from "date-fns";
 import { isSameDate } from "../utils";
 import ViewSelector from "./components/view-selector";
+import { useAuth } from "./context/auth";
+import { fetchCalendars, fetchCalendarEvents } from "../core/auth/calendar";
+import { CalendarViewType } from "../models";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -12,6 +15,48 @@ export function CalendarView() {
 
   const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
+
+  const auth = useAuth()
+
+  const timeMin = createMemo(() => {
+    switch (view.type()) {
+      case CalendarViewType.Month: return startOfMonth(cursorDate())
+      case CalendarViewType.Week: return startOfWeek(cursorDate(), {weekStartsOn: 0})
+      case CalendarViewType.Day: return startOfDay(cursorDate())
+    }
+  })
+
+  const timeMax = createMemo(() => {
+    switch (view.type()) {
+      case CalendarViewType.Month: return endOfMonth(cursorDate())
+      case CalendarViewType.Week: return endOfWeek(cursorDate(), {weekStartsOn: 0})
+      case CalendarViewType.Day: return endOfDay(cursorDate())
+    }
+  })
+
+  const [events] = createResource(() => ({token: auth.data.type === 'google' ? auth.data.token : null, timeMin: timeMin(), timeMax: timeMax()}), async ({token, timeMin, timeMax}) => {
+    if (!token) return []
+    const cals = await fetchCalendars(token)
+    const allEvents = []
+    for (const cal of cals) {
+      if (!cal.id) continue
+      const evs = await fetchCalendarEvents(token, cal.id, timeMin, timeMax)
+      allEvents.push(...evs)
+    }
+    return allEvents
+  })
+
+  const eventsByDate = createMemo(() => {
+    const map = new Map()
+    for (const event of events() || []) {
+      if (!event.start) continue
+      const dateStr = event.start.date || (event.start.dateTime ? event.start.dateTime.split('T')[0] : null)
+      if (!dateStr) continue
+      if (!map.has(dateStr)) map.set(dateStr, [])
+      map.get(dateStr).push(event)
+    }
+    return map
+  })
 
   useKeyboard(async (key) => {
 
@@ -113,6 +158,9 @@ export function CalendarView() {
                         >
                           {date}
                         </text>
+                        <For each={eventsByDate().get(format(day.value, 'yyyy-MM-dd'))?.slice(0, 3) || []}>
+                          {(event) => <text attributes={TextAttributes.DIM}>{event.summary.slice(0, 20)}{event.summary.length > 20 ? '...' : ''}</text>}
+                        </For>
                       </box>
                     )
                   }}
