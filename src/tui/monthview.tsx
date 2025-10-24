@@ -1,5 +1,5 @@
 import { TextAttributes } from "@opentui/core";
-import { useKeyboard, useRenderer } from "@opentui/solid";
+import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid";
 import { For, createMemo, createResource } from "solid-js"
 import { useCalendar } from "../useCalendar";
 import { format, addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay } from "date-fns";
@@ -12,11 +12,23 @@ import { CalendarViewType } from "../models";
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
   const renderer = useRenderer()
+  const dimensions = useTerminalDimensions()
 
   const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
 
   const auth = useAuth()
+
+  const dayWidth = createMemo(() => {
+    const totalWidth = dimensions().width;
+    switch (view.type()) {
+      case CalendarViewType.Month:
+      case CalendarViewType.Week:
+        return Math.floor(totalWidth / 7);
+      case CalendarViewType.Day:
+        return totalWidth;
+    }
+  })
 
   const timeMin = createMemo(() => {
     switch (view.type()) {
@@ -103,7 +115,7 @@ export function CalendarView() {
   })
 
   return (
-    <box>
+    <box width={dimensions().width} height={dimensions().height - 1}>
       <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
         <text attributes={TextAttributes.NONE}>{formattedMonth()}</text>
         {/* <text>{view.type()}</text> */}
@@ -117,7 +129,7 @@ export function CalendarView() {
             <text>{format(value, "E")}</text>
           )}
         </For>
-      </box>
+       </box>
 
       <box flexGrow={1}>
         <For each={body().value}>
@@ -132,13 +144,10 @@ export function CalendarView() {
                     if (!day) return null;
                     const { date, isCurrentDate, isCurrentMonth } = day;
 
-                    console.log('date', day.value, 'cursorDate', cursorDate());
-
                     return (
                       <box
-                        flexGrow={1}
+                        width={dayWidth()}
                         style={{
-                          minWidth: 5,
                           border: true,
                           borderStyle: isSameDate(day.value, cursorDate())
                             ? 'double'

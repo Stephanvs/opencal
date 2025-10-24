@@ -3,13 +3,8 @@ import { CalendarView } from "./monthview";
 
 export function Home() {
   return (
-    <box flexGrow={1} justifyContent="center" alignItems="center">
-      <box>
-        <Logo />
-        <box paddingTop={2}>
-          <CalendarView />
-        </box>
-      </box>
+    <box flexGrow={1}>
+      <CalendarView />
     </box>
   )
 }
