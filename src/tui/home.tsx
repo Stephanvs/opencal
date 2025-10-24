@@ -1,4 +1,3 @@
-import { Theme } from "./context/theme";
 import { CalendarView } from "./monthview";
 
 export function Home() {
@@ -9,15 +8,3 @@ export function Home() {
   )
 }
 
-function Logo() {
-  return (
-    <box>
-      <box flexDirection="row">
-        <ascii_font text="opencal" />
-      </box>
-      <box flexDirection="row" justifyContent="flex-end">
-        <text fg={Theme.textMuted}>todo</text>
-      </box>
-    </box>
-  )
-}
