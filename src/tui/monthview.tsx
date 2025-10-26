@@ -10,6 +10,7 @@ import { fetchCalendars, fetchCalendarEvents } from "@core/auth/calendar";
 import { CalendarViewType } from "../models";
 import logger from '@core/logger';
 import { Theme } from "./context/theme";
+import logger from '@core/logger';
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
