@@ -7,6 +7,7 @@ import { Theme } from "./context/theme";
 import { DialogProvider, useDialog } from "./components/dialog";
 import { AuthProvider, useAuth } from "./context/auth";
 import { NotAuthenticated } from "./context/not-authenticated";
+import logger from '@core/logger';
 
 render(
   () =>
@@ -40,7 +41,7 @@ function App() {
   })
 
   createEffect(() => {
-    console.log(JSON.stringify(route.data))
+    logger.info(JSON.stringify(route.data))
   })
 
   return (

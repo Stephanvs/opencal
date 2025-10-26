@@ -1,5 +1,6 @@
 import { createStore } from "solid-js/store"
 import { createContext, useContext, type ParentProps } from "solid-js"
+import logger from '@core/logger'
 
 type Route =
   | {
@@ -20,7 +21,7 @@ function init() {
       return store
     },
     navigate(route: Route) {
-      console.log("navigate", route)
+      logger.debug("navigate", route)
       setStore(route)
     },
   }
