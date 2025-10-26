@@ -4,17 +4,18 @@
  * Lists all authenticated providers and their status.
  */
 
-import { readAuthStorage, getTimeUntilExpiry, formatExpiryDate, isTokenExpired, type Provider } from '../../../core/auth';
+import { readAuthStorage, getTimeUntilExpiry, formatExpiryDate, isTokenExpired, type Provider } from '@core/auth';
+import logger from '@core/logger';
 
 export async function listCommand() {
-  console.log('\nAuthenticated Providers:\n');
+  logger.info('\nAuthenticated Providers:\n');
 
   const storage = readAuthStorage();
   const providers = Object.keys(storage) as Provider[];
 
   if (providers.length === 0) {
-    console.log('No authentication data found.');
-    console.log('Run "opencal auth login google" to authenticate.\n');
+    logger.info('No authentication data found.');
+    logger.info('Run "opencal auth login google" to authenticate.\n');
     process.exit(0);
   }
 
@@ -28,11 +29,11 @@ export async function listCommand() {
 
     const status = expired ? '[EXPIRED]' : '[Active]';
 
-    console.log(`${provider.toUpperCase()}`);
-    console.log(`  Status: ${status}`);
-    console.log(`  Expires: ${expiryDate} (${timeUntil})`);
-    console.log(`  Scopes: ${providerTokens.tokens.scopes.join(', ')}`);
-    console.log('');
+    logger.info(`${provider.toUpperCase()}`);
+    logger.info(`  Status: ${status}`);
+    logger.info(`  Expires: ${expiryDate} (${timeUntil})`);
+    logger.info(`  Scopes: ${providerTokens.tokens.scopes.join(', ')}`);
+    logger.info('');
   }
 
   process.exit(0);

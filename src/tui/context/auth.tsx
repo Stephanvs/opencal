@@ -1,7 +1,8 @@
 import { createSignal } from "solid-js"
 import { createContext, useContext, type ParentProps, onMount } from "solid-js"
-import { createGoogleClient, getProviderTokens, saveProviderTokens } from '../../core/auth'
-import type { TokenData } from '../../core/auth/types'
+import { createGoogleClient, getProviderTokens, saveProviderTokens } from '@core/auth'
+import type { TokenData } from '@core/auth/types'
+import logger from '@core/logger'
 
 export type Auth =
   | { type: 'unauthorized' }
@@ -31,7 +32,7 @@ async function refreshToken(token: TokenData): Promise<TokenData | null> {
     }
     return refreshed
   } catch (error) {
-    console.error('Failed to refresh token:', error)
+    logger.error('Failed to refresh token:', error)
     return null
   }
 }
@@ -44,15 +45,15 @@ function init() {
   // Load tokens on startup
   onMount(async () => {
     const tokens = getProviderTokens('google')
-    console.log('auth:onMount entry, tokens: ', tokens)
+    logger.info('auth:onMount entry, tokens: ', tokens)
     if (tokens?.tokens) {
       const isValid = await validateToken(tokens.tokens)
       if (isValid) {
-        console.log('auth:onMount isValid:', isValid)
+        logger.info('auth:onMount isValid:', isValid)
         setAuth({ type: 'google', token: tokens.tokens })
       } else {
         // Try to refresh
-        console.log('refreshing token')
+        logger.info('refreshing token')
         const refreshed = await refreshToken(tokens.tokens)
         if (refreshed) {
           setAuth({ type: 'google', token: refreshed })
@@ -67,7 +68,7 @@ function init() {
       return auth()
     },
     google_login(token: TokenData) {
-      console.log("google login", token)
+      logger.info("google login", token)
       setAuth({ type: 'google', token })
       saveProviderTokens('google', { type: 'oauth', tokens: token })
     },

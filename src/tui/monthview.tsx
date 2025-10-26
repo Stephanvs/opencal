@@ -6,8 +6,9 @@ import { format, addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfW
 import { isSameDate } from "../utils";
 import ViewSelector from "./components/view-selector";
 import { useAuth } from "./context/auth";
-import { fetchCalendars, fetchCalendarEvents } from "../core/auth/calendar";
+import { fetchCalendars, fetchCalendarEvents } from "@core/auth/calendar";
 import { CalendarViewType } from "../models";
+import logger from '@core/logger';
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -79,35 +80,35 @@ export function CalendarView() {
     switch (key.name) {
       case "t":
         var newDate = navigation.setToday();
-        console.log("t pressed", newDate);
+        logger.debug("t pressed", newDate);
         break;
       case "l":
         var newDate = navigation.toNext();
-        console.log("l pressed", newDate);
+        logger.debug("l pressed", newDate);
         break;
       case "h":
         var newDate = navigation.toPrev();
-        console.log("h pressed", newDate)
+        logger.debug("h pressed", newDate)
         break;
       case "j":
         navigation.setDate(addDays(cursorDate(), 1));
-        console.log('next day', cursorDate());
+        logger.debug('next day', cursorDate());
         break;
       case "k":
         navigation.setDate(subDays(cursorDate(), 1));
-        console.log('next day', cursorDate());
+        logger.debug('next day', cursorDate());
         break;
       case "m":
         view.showMonthView();
-        console.log('switched to month view');
+        logger.debug('switched to month view');
         break;
       case "w":
         view.showWeekView();
-        console.log('switched to week view');
+        logger.debug('switched to week view');
         break;
       case "d":
         view.showDayView();
-        console.log('switched to day view');
+        logger.debug('switched to day view');
         break;
       case "q":
         process.exit(0);
@@ -143,6 +144,8 @@ export function CalendarView() {
                   {(day) => {
                     if (!day) return null;
                     const { date, isCurrentDate, isCurrentMonth } = day;
+
+                    logger.debug('date', day.value, 'cursorDate', cursorDate());
 
                     return (
                       <box

@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import type { TokenData } from './types';
 import { generatePKCE } from "@openauthjs/openauth/pkce";
+import logger from '@core/logger';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -68,10 +69,10 @@ export async function authorize(): Promise<OAuthFlowResult> {
       state: pkce.verifier,
     });
 
-    console.log('\nOpening browser for authorization...');
-    console.log('If browser doesn\'t open, visit this URL:\n');
-    console.log(authUrl);
-    console.log('');
+    logger.info('\nOpening browser for authorization...');
+    logger.info('If browser doesn\'t open, visit this URL:\n');
+    logger.info(authUrl);
+    logger.info('');
 
     await openBrowser(authUrl);
 
@@ -155,7 +156,7 @@ function waitForOAuthCallback(): Promise<string> {
     });
 
     server.listen(3000, () => {
-      console.log('Waiting for authorization...\n');
+      logger.info('Waiting for authorization...\n');
     });
 
     server.on('error', (error) => {
@@ -190,7 +191,7 @@ async function exchangeCodeForTokens(oauthClient: OAuth2Client, code: string, ve
 
     return tokenData;
   } catch (error: any) {
-    console.error('Token exchange error:', error);
+    logger.error('Token exchange error:', error);
     throw new Error(error?.response?.data?.error_description || error?.message || 'Token exchange failed');
   }
 }
