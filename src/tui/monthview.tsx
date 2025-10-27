@@ -160,8 +160,9 @@ export function CalendarView() {
                           borderColor: isCurrentDate
                             ? Theme.accent
                             : isCurrentMonth
-                              ? Theme.text
-                              : Theme.textMuted
+                              ? Theme.borderActive
+                              : Theme.borderSubtle,
+                          backgroundColor: Theme.background
                         }}>
                         <text attributes={
                           isCurrentDate
