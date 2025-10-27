@@ -1,11 +1,12 @@
 import { createEffect, Match, Switch } from "solid-js";
 import { RouteProvider, useRoute } from "./context/route"
 import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid";
-import { Home } from "./home";
 import { TextAttributes } from "@opentui/core";
+import { Home } from "./home";
 import { Theme } from "./context/theme";
 import { DialogProvider, useDialog } from "./components/dialog";
 import { AuthProvider, useAuth } from "./context/auth";
+import { CommandProvider, useCommandDialog } from "./components/dialog-command";
 import { NotAuthenticated } from "./context/not-authenticated";
 import logger from '@core/logger';
 
@@ -14,11 +15,16 @@ render(
     <AuthProvider>
       <RouteProvider>
         <DialogProvider>
-          <App />
+          <CommandProvider>
+            <App />
+          </CommandProvider>
         </DialogProvider>
       </RouteProvider>
     </AuthProvider>,
   {
+    targetFps: 60,
+    gatherStats: false,
+    useKittyKeyboard: true,
     consoleOptions: {
       titleBarColor: "#cc33ff"
     }
@@ -31,6 +37,7 @@ function App() {
   const dimensions = useTerminalDimensions()
   const renderer = useRenderer()
   const dialog = useDialog()
+  const command = useCommandDialog()
 
   useKeyboard(async (evt) => {
     if (evt.name === "`") {
@@ -43,6 +50,19 @@ function App() {
   createEffect(() => {
     logger.info(JSON.stringify(route.data))
   })
+
+  command.register(() => [
+    {
+      title: "Switch theme",
+      value: "preferences_theme",
+      keybind: "preferences.theme",
+      category: "Preferences",
+      onSelect: () => {
+        dialog.replace(() => <text>hi from command</text>)
+        // dialog.replace(() => <DialogThemeSwitch />)
+      },
+    },
+  ])
 
   return (
     <box width={dimensions().width} backgroundColor={Theme.background}>
