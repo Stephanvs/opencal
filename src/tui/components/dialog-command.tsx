@@ -3,6 +3,7 @@ import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select";
 import { createContext, createMemo, createSignal, onCleanup, useContext, type Accessor, type ParentProps } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
 import { useKeybind } from "@tui/context/keybind";
+import type { KeybindsConfig } from "@tui/keyboard/keybinds-config";
 
 type Context = ReturnType<typeof init>
 const ctx = createContext<Context>();

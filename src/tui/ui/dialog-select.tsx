@@ -3,10 +3,12 @@ import * as fuzzysort from "fuzzysort"
 import { createStore } from "solid-js/store"
 import { useDialog, type DialogContext } from "../components/dialog"
 import { RGBA, ScrollBoxRenderable, TextAttributes, type InputRenderable } from "@opentui/core"
-import { createEffect, createMemo } from "solid-js/types/server/reactive.js"
+import { createEffect, createMemo } from "solid-js"
 import { useKeyboard, useTerminalDimensions } from "@opentui/solid"
 import { Theme } from "../context/theme"
 import { batch, For, Show } from "solid-js"
+import { Keybind } from "@tui/keyboard/keybind"
+import { useKeybind } from "@tui/context/keybind"
 
 export interface DialogSelectProps<T> {
   title: string
@@ -54,7 +56,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       props.options,
       filter((x) => x.disabled !== true),
       take(props.limit ?? Infinity),
-      (x) => (!needle ? x : fuzzysort.go(needle, x, { keys: [ "title", "category" ]}).map((x: any) => x.obj)),
+      (x) => (!needle ? x : fuzzysort.go(needle, x, { keys: ["title", "category"] }).map((x: any) => x.obj)),
     )
     return result
   })
@@ -114,7 +116,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
     }
   }
 
-  // const keybind = useKeybind()
+  const keybind = useKeybind()
   useKeyboard((evt) => {
     if (evt.name === "up") move(-1)
     if (evt.name === "down") move(1)
@@ -126,13 +128,12 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       props.onSelect?.(option)
     }
 
-    // TODO: Handle custom keymaps
-    // for (const item of props.keybind ?? []) {
-    //   if (Keybind.match(item.keybind, keybind.parse(evt))) {
-    //     const s = selected()
-    //     if (s) item.onTrigger(s)
-    //   }
-    // }
+    for (const item of props.keybind ?? []) {
+      if (Keybind.match(item.keybind, keybind.parse(evt))) {
+        const s = selected()
+        if (s) item.onTrigger(s)
+      }
+    }
   })
 
   let scroll: ScrollBoxRenderable
@@ -173,7 +174,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       <scrollbox
         paddingLeft={2}
         paddingRight={2}
-        scrollbarOptions={{ visible: false }} 
+        scrollbarOptions={{ visible: false }}
         ref={(r: ScrollBoxRenderable) => (scroll = r)}
         maxHeight={height()}
       >
@@ -203,7 +204,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
                         if (index === -1) return
                         moveTo(index)
                       }}
-                      backgroundColor={active() ? (option.bg ?? Theme.primary) : RGBA.fromInts(0, 0, 0, 0) }
+                      backgroundColor={active() ? (option.bg ?? Theme.primary) : RGBA.fromInts(0, 0, 0, 0)}
                       paddingLeft={1}
                       paddingRight={1}
                       gap={1}
@@ -236,10 +237,10 @@ function Option(props: {
   onMouseOver?: () => void
 }) {
   return (
-  <>
+    <>
       <text
         flexGrow={1}
-        fg={props.active ? Theme.background : props.current ? Theme.primary : Theme.text }
+        fg={props.active ? Theme.background : props.current ? Theme.primary : Theme.text}
         attributes={props.active ? TextAttributes.BOLD : undefined}
         overflow="hidden"
         wrapMode="none"
@@ -252,6 +253,6 @@ function Option(props: {
           <text fg={props.active ? Theme.background : Theme.textMuted}>{props.footer}</text>
         </box>
       </Show>
-  </>
+    </>
   )
 }
