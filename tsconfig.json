@@ -28,7 +28,8 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     "paths": {
-      "@core/*": ["src/core/*"]
+      "@core/*": ["src/core/*"],
+      "@tui/*": ["src/tui/*"]
     }
   }
 }
