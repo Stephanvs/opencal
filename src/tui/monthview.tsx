@@ -8,6 +8,7 @@ import ViewSelector from "./components/view-selector";
 import { useAuth } from "./context/auth";
 import { fetchCalendars, fetchCalendarEvents } from "../core/auth/calendar";
 import { CalendarViewType } from "../models";
+import { Theme } from "./context/theme";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -153,10 +154,10 @@ export function CalendarView() {
                             ? 'double'
                             : 'single',
                           borderColor: isCurrentDate
-                            ? 'yellow'
+                            ? Theme.accent
                             : isCurrentMonth
-                              ? 'white'
-                              : 'gray'
+                              ? Theme.text
+                              : Theme.textMuted
                         }}>
                         <text attributes={
                           isCurrentDate
