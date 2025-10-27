@@ -1,5 +1,5 @@
 import { useDialog } from "./dialog";
-import { DialogSelect, type DialogSelectOption } from "./dialog-select";
+import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select";
 import { createContext, createMemo, createSignal, onCleanup, useContext, type Accessor, type ParentProps } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
 import { useKeybind } from "@tui/context/keybind";
