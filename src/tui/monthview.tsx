@@ -11,6 +11,7 @@ import { CalendarViewType } from "../models";
 import logger from '@core/logger';
 import { Theme } from "./context/theme";
 import logger from '@core/logger';
+import { Theme } from "./context/theme";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
