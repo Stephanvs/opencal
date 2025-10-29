@@ -5,7 +5,7 @@ import { useKeyboard, useRenderer } from "@opentui/solid"
 import { Keybind } from "@tui/keyboard/keybind"
 import type { ParsedKey, Renderable } from "@opentui/core"
 import type { KeybindsConfig } from "@tui/keyboard/keybinds-config"
-import { pipe } from "remeda"
+import { pipe, mapValues } from "remeda"
 
 export const { use: useKeybind, provider: KeybindProvider } = createSimpleContext({
   name: "Keybind",
@@ -13,7 +13,7 @@ export const { use: useKeybind, provider: KeybindProvider } = createSimpleContex
     const keybinds = createMemo(() => {
       return pipe(
         DEFAULT_KEYBINDS,
-        // (val) => Object.assign(val, )
+        mapValues((value) => Keybind.parse(value))
       )
     })
 
