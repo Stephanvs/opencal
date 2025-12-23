@@ -9,7 +9,7 @@ import { useAuth } from "./context/auth";
 import { fetchCalendars, fetchCalendarEvents } from "@core/auth/calendar";
 import { CalendarViewType } from "../models";
 import logger from '@core/logger';
-import { Theme } from "./context/theme";
+import { useTheme } from "./context/theme";
 import { useDialog } from "./components/dialog";
 
 export function CalendarView() {
@@ -17,6 +17,7 @@ export function CalendarView() {
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
   const dialog = useDialog()
+  const { theme } = useTheme()
 
   const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
@@ -127,14 +128,14 @@ export function CalendarView() {
     <box width={dimensions().width} height={dimensions().height - 1}>
       <box
         height={1}
-        backgroundColor={Theme.backgroundPanel}
+        backgroundColor={theme.backgroundPanel}
         flexDirection="row"
         justifyContent="space-between"
       >
         <box flexDirection="row">
           <box
             flexDirection="row"
-            backgroundColor={Theme.backgroundElement}
+            backgroundColor={theme.backgroundElement}
             paddingLeft={1}
             paddingRight={1}
           >
@@ -145,7 +146,7 @@ export function CalendarView() {
           </box>
         </box>
         <box flexDirection="row">
-          <text paddingRight={1} fg={Theme.textMuted}>
+          <text paddingRight={1} fg={theme.textMuted}>
             {formattedDate()}
           </text>
         </box>
@@ -181,10 +182,10 @@ export function CalendarView() {
                         width={dayWidth()}
                         style={{
                           backgroundColor: isSameDate(day.value, cursorDate())
-                            ? Theme.accent
+                            ? theme.accent
                             : isCurrentDate
-                              ? Theme.backgroundElement
-                              : Theme.background
+                              ? theme.backgroundElement
+                              : theme.background
                         }}>
                         <text attributes={
                           isCurrentDate
