@@ -12,6 +12,7 @@ import { KeybindProvider } from "./context/keybind"
 import { authorize } from "@core/auth/oauth-flow"
 import logger from "@core/logger"
 import { Toast, ToastProvider, useToast } from "./ui/toast"
+import "opentui-spinner/solid";
 
 render(
   () => (
@@ -75,6 +76,7 @@ function App() {
             // Show waiting dialog
             dialog.replace(() => (
               <box paddingLeft={3} paddingRight={3} paddingTop={1} paddingBottom={1}>
+                <spinner name="dots" color={theme.primary} />
                 <text>Waiting for browser...</text>
               </box>
             ))
