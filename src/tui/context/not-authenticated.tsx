@@ -1,4 +1,4 @@
-import { Theme } from "./theme";
+import { Theme } from "./theme"
 
 export function NotAuthenticated() {
   return (
@@ -8,12 +8,17 @@ export function NotAuthenticated() {
         <text>To use OpenCal, please authenticate:</text>
       </box>
       <box paddingTop={1}>
+        <text fg={Theme.primary}>Press ctrl+p and select "Authenticate with Google"</text>
+      </box>
+      <box paddingTop={1}>
+        <text fg={Theme.textMuted}>or via CLI:</text>
+      </box>
+      <box paddingTop={1}>
         <text fg={Theme.primary}>$ opencal auth login google</text>
       </box>
       <box paddingTop={2}>
-        <text fg={Theme.textMuted}>Press 'ctrl+c' to quit</text>
+        <text fg={Theme.textMuted}>Press ctrl+c to quit</text>
       </box>
     </box>
   )
 }
-

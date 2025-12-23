@@ -1,12 +1,12 @@
-import { createSignal } from "solid-js"
-import { createContext, useContext, type ParentProps, onMount } from "solid-js"
-import { createGoogleClient, getProviderTokens, saveProviderTokens } from '@core/auth'
-import type { TokenData } from '@core/auth/types'
-import logger from '@core/logger'
+import { createSignal, onMount } from "solid-js"
+import { createContext, useContext, type ParentProps } from "solid-js"
+import { createGoogleClient, deleteProviderTokens, getProviderTokens, saveProviderTokens } from "@core/auth"
+import type { TokenData } from "@core/auth/types"
+import logger from "@core/logger"
 
 export type Auth =
-  | { type: 'unauthorized' }
-  | { type: 'google', token: TokenData }
+  | { type: "unauthorized" }
+  | { type: "google"; token: TokenData }
 
 async function validateToken(token: TokenData): Promise<boolean> {
   return token.expiryTimestamp > Date.now()
@@ -14,7 +14,7 @@ async function validateToken(token: TokenData): Promise<boolean> {
 
 async function refreshToken(token: TokenData): Promise<TokenData | null> {
   try {
-    const oauthClient = createGoogleClient();
+    const oauthClient = createGoogleClient()
     oauthClient.setCredentials({
       access_token: token.access,
       refresh_token: token.refresh,
@@ -22,7 +22,7 @@ async function refreshToken(token: TokenData): Promise<TokenData | null> {
 
     const { credentials } = await oauthClient.refreshAccessToken()
     const refreshed: TokenData = {
-      access: credentials.access_token!,
+      access: credentials.access_token ?? "",
       refresh: credentials.refresh_token || token.refresh,
       expiresIn: credentials.expiry_date
         ? Math.floor((credentials.expiry_date - Date.now()) / 1000)
@@ -32,32 +32,32 @@ async function refreshToken(token: TokenData): Promise<TokenData | null> {
     }
     return refreshed
   } catch (error) {
-    logger.error('Failed to refresh token:', error)
+    logger.error("Failed to refresh token:", error)
     return null
   }
 }
 
 function init() {
   const [auth, setAuth] = createSignal<Auth>({
-    type: 'unauthorized'
+    type: "unauthorized",
   })
 
   // Load tokens on startup
   onMount(async () => {
-    const tokens = getProviderTokens('google')
-    logger.info('auth:onMount entry, tokens: ', tokens)
+    const tokens = getProviderTokens("google")
+    logger.info("auth:onMount entry, tokens: ", tokens)
     if (tokens?.tokens) {
       const isValid = await validateToken(tokens.tokens)
       if (isValid) {
-        logger.info('auth:onMount isValid:', isValid)
-        setAuth({ type: 'google', token: tokens.tokens })
+        logger.info("auth:onMount isValid:", isValid)
+        setAuth({ type: "google", token: tokens.tokens })
       } else {
         // Try to refresh
-        logger.info('refreshing token')
+        logger.info("refreshing token")
         const refreshed = await refreshToken(tokens.tokens)
         if (refreshed) {
-          setAuth({ type: 'google', token: refreshed })
-          saveProviderTokens('google', { type: 'oauth', tokens: refreshed })
+          setAuth({ type: "google", token: refreshed })
+          saveProviderTokens("google", { type: "oauth", tokens: refreshed })
         }
       }
     }
@@ -69,23 +69,24 @@ function init() {
     },
     google_login(token: TokenData) {
       logger.info("google login", token)
-      setAuth({ type: 'google', token })
-      saveProviderTokens('google', { type: 'oauth', tokens: token })
+      setAuth({ type: "google", token })
+      saveProviderTokens("google", { type: "oauth", tokens: token })
     },
     logout() {
-      setAuth({ type: 'unauthorized' })
-      // Note: Don't delete tokens here, as logout might be temporary
+      setAuth({ type: "unauthorized" })
+      deleteProviderTokens("google")
+      logger.info("Logged out and deleted stored tokens")
     },
     async refreshIfNeeded() {
       const currentAuth = auth()
-      if (currentAuth.type === 'google') {
+      if (currentAuth.type === "google") {
         if (currentAuth.token.expiryTimestamp < Date.now()) {
           const refreshed = await refreshToken(currentAuth.token)
           if (refreshed) {
-            setAuth({ type: 'google', token: refreshed })
-            saveProviderTokens('google', { type: 'oauth', tokens: refreshed })
+            setAuth({ type: "google", token: refreshed })
+            saveProviderTokens("google", { type: "oauth", tokens: refreshed })
           } else {
-            setAuth({ type: 'unauthorized' })
+            setAuth({ type: "unauthorized" })
           }
         }
       }
@@ -109,4 +110,3 @@ export function useAuth() {
   }
   return value
 }
-
