@@ -10,11 +10,13 @@ import { fetchCalendars, fetchCalendarEvents } from "@core/auth/calendar";
 import { CalendarViewType } from "../models";
 import logger from '@core/logger';
 import { Theme } from "./context/theme";
+import { useDialog } from "./components/dialog";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
+  const dialog = useDialog()
 
   const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
@@ -73,6 +75,8 @@ export function CalendarView() {
   })
 
   useKeyboard(async (key) => {
+    // Ignore keyboard events when dialog is open
+    if (dialog.isOpen) return;
 
     if (key.name === "`" || key.name === '"') {
       renderer.console.toggle();
