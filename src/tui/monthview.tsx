@@ -118,11 +118,30 @@ export function CalendarView() {
 
   return (
     <box width={dimensions().width} height={dimensions().height - 1}>
-      <box border borderStyle="rounded" justifyContent="space-between" flexDirection="row">
-        <text attributes={TextAttributes.NONE}>{formattedMonth()}</text>
-        {/* <text>{view.type()}</text> */}
-        <ViewSelector currentViewMode={view.type()} />
-        <text>{formattedDate()}</text>
+      <box
+        height={1}
+        backgroundColor={Theme.backgroundPanel}
+        flexDirection="row"
+        justifyContent="space-between"
+      >
+        <box flexDirection="row">
+          <box
+            flexDirection="row"
+            backgroundColor={Theme.backgroundElement}
+            paddingLeft={1}
+            paddingRight={1}
+          >
+            <text attributes={TextAttributes.BOLD}>{formattedMonth()}</text>
+          </box>
+          <box paddingLeft={1} paddingRight={1}>
+            <ViewSelector currentViewMode={view.type()} />
+          </box>
+        </box>
+        <box flexDirection="row">
+          <text paddingRight={1} fg={Theme.textMuted}>
+            {formattedDate()}
+          </text>
+        </box>
       </box>
 
       <box borderStyle="rounded" flexDirection="row" justifyContent="space-between">
