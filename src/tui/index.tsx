@@ -156,9 +156,7 @@ function App() {
             <text fg={Theme.textMuted}>open</text>
             <text attributes={TextAttributes.BOLD}>cal </text>
           </box>
-          <box paddingLeft={1} paddingRight={1}>
-            <text>hello</text>
-          </box>
+
         </box>
         <box flexDirection="row">
           <text paddingRight={1} fg={Theme.textMuted}>
