@@ -1,11 +1,11 @@
 import { createMemo } from "solid-js"
 import { createStore } from "solid-js/store"
-import { createSimpleContext } from "./create-simple-context"
 import { useKeyboard, useRenderer } from "@opentui/solid"
+import { pipe, mapValues } from "remeda"
+import { createSimpleContext } from "./create-simple-context"
 import { Keybind } from "@tui/keyboard/keybind"
+import { DEFAULT_KEYBINDS, type KeybindsConfig } from "@tui/keyboard/keybinds-config"
 import type { ParsedKey, Renderable } from "@opentui/core"
-import type { KeybindsConfig } from "@tui/keyboard/keybinds-config"
-import { pipe } from "remeda"
 
 export const { use: useKeybind, provider: KeybindProvider } = createSimpleContext({
   name: "Keybind",
@@ -13,7 +13,7 @@ export const { use: useKeybind, provider: KeybindProvider } = createSimpleContex
     const keybinds = createMemo(() => {
       return pipe(
         DEFAULT_KEYBINDS,
-        // (val) => Object.assign(val, )
+        mapValues((value) => (value ? Keybind.parse(value) : [])),
       )
     })
 
@@ -50,7 +50,7 @@ export const { use: useKeybind, provider: KeybindProvider } = createSimpleContex
       }
     }
 
-    useKeyboard(async (evt: any) => {
+    useKeyboard(async (evt: ParsedKey) => {
       if (!store.leader && result.match("leader", evt)) {
         leader(true)
         return
@@ -74,38 +74,34 @@ export const { use: useKeybind, provider: KeybindProvider } = createSimpleContex
         return store.leader
       },
       parse(evt: ParsedKey): Keybind.Info {
-        return {
-          meta: evt.meta,
-          ctrl: evt.ctrl,
-          shift: evt.shift,
-          name: evt.name,
-          leader: store.leader,
+        // Handle special case for Ctrl+Underscore (represented as \x1F)
+        if (evt.name === "\x1F") {
+          return Keybind.fromParsedKey({ ...evt, name: "_", ctrl: true }, store.leader)
         }
+        return Keybind.fromParsedKey(evt, store.leader)
       },
       match(key: keyof KeybindsConfig, evt: ParsedKey) {
         const keybind = keybinds()[key]
         if (!keybind) return false
         const parsed: Keybind.Info = result.parse(evt)
-        for (const key of keybind) {
-          if (Keybind.match(key, parsed)) {
+        for (const k of keybind) {
+          if (Keybind.match(k, parsed)) {
             return true
           }
         }
+        return false
       },
       print(key: keyof KeybindsConfig) {
         const first = keybinds()[key]?.at(0)
         if (!first) return ""
-        const result = Keybind.toString(first)
-        return result.replace("<leader>", Keybind.toString(keybinds().leader![0]!))
+        const formatted = Keybind.format(first)
+        const leaderKey = keybinds().leader?.at(0)
+        if (leaderKey) {
+          return formatted.replace("<leader>", Keybind.format(leaderKey))
+        }
+        return formatted
       },
     }
     return result
   },
 })
-
-const DEFAULT_KEYBINDS: KeybindsConfig = {
-  leader: "space",
-  app_help: "<leader>h",
-  theme_list: "<leader>t",
-  command_list: "<leader>p",
-}
