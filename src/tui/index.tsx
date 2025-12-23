@@ -11,17 +11,20 @@ import { NotAuthenticated } from "./context/not-authenticated"
 import { KeybindProvider } from "./context/keybind"
 import { authorize } from "@core/auth/oauth-flow"
 import logger from "@core/logger"
+import { Toast, ToastProvider, useToast } from "./ui/toast"
 
 render(
   () => (
     <AuthProvider>
       <RouteProvider>
         <KeybindProvider>
-          <DialogProvider>
-            <CommandProvider>
-              <App />
-            </CommandProvider>
-          </DialogProvider>
+          <ToastProvider>
+            <DialogProvider>
+              <CommandProvider>
+                <App />
+              </CommandProvider>
+            </DialogProvider>
+          </ToastProvider>
         </KeybindProvider>
       </RouteProvider>
     </AuthProvider>
@@ -43,6 +46,7 @@ function App() {
   const renderer = useRenderer()
   const dialog = useDialog()
   const command = useCommandDialog()
+  const toast = useToast()
 
   useKeyboard(async (evt) => {
     if (evt.name === "`") {
@@ -77,13 +81,16 @@ function App() {
               if (result.success && result.tokens) {
                 auth.google_login(result.tokens)
                 dialog.clear()
+                toast.success("Successfully authenticated with Google!")
               } else {
                 logger.error("OAuth failed:", result.error)
                 dialog.clear()
+                toast.error(new Error(result.error ?? "OAuth authentication failed"))
               }
             } catch (error) {
               logger.error("OAuth error:", error)
               dialog.clear()
+              toast.error(error)
             }
           },
         },
@@ -99,6 +106,7 @@ function App() {
         onSelect: () => {
           auth.logout()
           dialog.clear()
+          toast.info("You have been logged out")
         },
       },
     ]
@@ -121,6 +129,42 @@ function App() {
       category: "System",
       onSelect: () => {
         renderer.console.toggle()
+        dialog.clear()
+      },
+    },
+    {
+      title: "Show success toast",
+      value: "toast_success",
+      category: "Debug",
+      onSelect: () => {
+        toast.success("Operation completed successfully!")
+        dialog.clear()
+      },
+    },
+    {
+      title: "Show error toast",
+      value: "toast_error",
+      category: "Debug",
+      onSelect: () => {
+        toast.error(new Error("Something went wrong"))
+        dialog.clear()
+      },
+    },
+    {
+      title: "Show info toast",
+      value: "toast_info",
+      category: "Debug",
+      onSelect: () => {
+        toast.info("Here is some information")
+        dialog.clear()
+      },
+    },
+    {
+      title: "Show warning toast",
+      value: "toast_warning",
+      category: "Debug",
+      onSelect: () => {
+        toast.warning("This is a warning message")
         dialog.clear()
       },
     },
@@ -166,6 +210,9 @@ function App() {
           </text>
         </box>
       </box>
+
+      {/* Toast notifications */}
+      <Toast />
     </box>
   )
 }
