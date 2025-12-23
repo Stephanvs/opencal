@@ -24,9 +24,11 @@
         "@opentui/solid": "^0.1.30",
         "babel-preset-solid": "^1.9.9",
         "date-fns": "^4.1.0",
+        "fuzzysort": "^3.1.0",
         "googleapis": "^164.1.0",
+        "remeda": "^2.32.0",
         "solid-js": "^1.9.9",
-        "yargs": "^18.0.0",
-        "winston": "^3.13.0"
+        "winston": "^3.13.0",
+        "yargs": "^18.0.0"
     }
 }
