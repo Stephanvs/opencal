@@ -85,6 +85,9 @@ function init() {
     setSize(size: "medium" | "large") {
       setStore("size", size)
     },
+    get isOpen() {
+      return store.stack.length > 0
+    },
   }
 }
 
