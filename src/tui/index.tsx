@@ -77,7 +77,7 @@ function App() {
             dialog.replace(() => (
               <box paddingLeft={3} paddingRight={3} paddingTop={1} paddingBottom={1}>
                 <spinner name="dots" color={theme.primary} />
-                <text>Waiting for browser...</text>
+                <text marginLeft={1}>Waiting for browser...</text>
               </box>
             ))
 
