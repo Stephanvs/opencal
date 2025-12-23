@@ -17,8 +17,6 @@
         "dev:cli": "bun run src/cli/index.ts"
     },
     "dependencies": {
-        "@babel/core": "^7.28.5",
-        "@babel/preset-typescript": "^7.28.5",
         "@openauthjs/openauth": "^0.4.3",
         "@opentui/core": "^0.1.63",
         "@opentui/solid": "^0.1.63",
