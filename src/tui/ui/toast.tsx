@@ -6,7 +6,7 @@ import { createStore } from "solid-js/store"
 import { useTerminalDimensions } from "@opentui/solid"
 import { TextAttributes } from "@opentui/core"
 
-import { Theme } from "@tui/context/theme"
+import { useTheme } from "@tui/context/theme"
 import { TuiEvent } from "@tui/event"
 
 const SplitBorder = {
@@ -28,19 +28,20 @@ const SplitBorder = {
 export type ToastOptions = z.infer<typeof TuiEvent.ToastShow.properties>
 
 export function Toast() {
+  const { theme } = useTheme()
   const toast = useToast()
   const dimensions = useTerminalDimensions()
 
   const getVariantColor = (variant: ToastOptions["variant"]) => {
     switch (variant) {
       case "error":
-        return Theme.error
+        return theme.error
       case "warning":
-        return Theme.warning
+        return theme.warning
       case "success":
-        return Theme.success
+        return theme.success
       default:
-        return Theme.info
+        return theme.info
     }
   }
 
@@ -58,17 +59,17 @@ export function Toast() {
           paddingRight={2}
           paddingTop={1}
           paddingBottom={1}
-          backgroundColor={Theme.backgroundPanel}
+          backgroundColor={theme.backgroundPanel}
           borderColor={getVariantColor(current().variant)}
           border={["left", "right"]}
           customBorderChars={SplitBorder.customBorderChars}
         >
           <Show when={current().title}>
-            <text attributes={TextAttributes.BOLD} marginBottom={1} fg={Theme.text}>
+            <text attributes={TextAttributes.BOLD} marginBottom={1} fg={theme.text}>
               {current().title}
             </text>
           </Show>
-          <text fg={Theme.text} wrapMode="word" width="100%">
+          <text fg={theme.text} wrapMode="word" width="100%">
             {current().message}
           </text>
         </box>
