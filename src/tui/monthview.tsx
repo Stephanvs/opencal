@@ -182,7 +182,7 @@ export function CalendarView() {
                         width={dayWidth()}
                         style={{
                           backgroundColor: isSameDate(day.value, cursorDate())
-                            ? theme.accent
+                            ? theme.primary
                             : isCurrentDate
                               ? theme.backgroundElement
                               : theme.background
