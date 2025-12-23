@@ -135,42 +135,7 @@ function App() {
         dialog.clear()
       },
     },
-    {
-      title: "Show success toast",
-      value: "toast_success",
-      category: "Debug",
-      onSelect: () => {
-        toast.success("Operation completed successfully!")
-        dialog.clear()
-      },
-    },
-    {
-      title: "Show error toast",
-      value: "toast_error",
-      category: "Debug",
-      onSelect: () => {
-        toast.error(new Error("Something went wrong"))
-        dialog.clear()
-      },
-    },
-    {
-      title: "Show info toast",
-      value: "toast_info",
-      category: "Debug",
-      onSelect: () => {
-        toast.info("Here is some information")
-        dialog.clear()
-      },
-    },
-    {
-      title: "Show warning toast",
-      value: "toast_warning",
-      category: "Debug",
-      onSelect: () => {
-        toast.warning("This is a warning message")
-        dialog.clear()
-      },
-    },
+
   ])
 
   // Theme commands
