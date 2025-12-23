@@ -1,6 +1,6 @@
 import { useKeyboard, useTerminalDimensions } from "@opentui/solid"
 import { createContext, For, Show, useContext, type JSX, type ParentProps } from "solid-js"
-import { Theme } from "../context/theme"
+import { useTheme } from "../context/theme"
 import { RGBA } from "@opentui/core"
 import { createStore, produce } from "solid-js/store"
 
@@ -9,7 +9,7 @@ const Border = {
   topRight: "┃",
   bottomLeft: "┃",
   bottomRight: "┃",
-  horizontal: "",
+  horizontal: " ",
   vertical: "┃",
   topT: "+",
   bottomT: "+",
@@ -23,6 +23,7 @@ export function Dialog(
   }>,
 ) {
   const dimensions = useTerminalDimensions()
+  const { theme } = useTheme()
 
   return (
     <box
@@ -39,8 +40,8 @@ export function Dialog(
         customBorderChars={Border}
         width={props.size === "large" ? 80 : 60}
         maxWidth={dimensions().width - 2}
-        backgroundColor={Theme.backgroundPanel}
-        borderColor={Theme.border}
+        backgroundColor={theme.backgroundPanel}
+        borderColor={theme.border}
         paddingTop={1}
       >
         {props.children}

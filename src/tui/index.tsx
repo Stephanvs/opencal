@@ -3,7 +3,7 @@ import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentu
 import { TextAttributes } from "@opentui/core"
 import { RouteProvider, useRoute } from "./context/route"
 import { Home } from "./home"
-import { Theme } from "./context/theme"
+import { ThemeProvider, useTheme } from "./context/theme"
 import { DialogProvider, useDialog } from "./components/dialog"
 import { AuthProvider, useAuth } from "./context/auth"
 import { CommandProvider, useCommandDialog } from "./components/dialog-command"
@@ -15,19 +15,21 @@ import { Toast, ToastProvider, useToast } from "./ui/toast"
 
 render(
   () => (
-    <AuthProvider>
-      <RouteProvider>
-        <KeybindProvider>
-          <ToastProvider>
-            <DialogProvider>
-              <CommandProvider>
-                <App />
-              </CommandProvider>
-            </DialogProvider>
-          </ToastProvider>
-        </KeybindProvider>
-      </RouteProvider>
-    </AuthProvider>
+    <ThemeProvider mode="dark">
+      <AuthProvider>
+        <RouteProvider>
+          <KeybindProvider>
+            <ToastProvider>
+              <DialogProvider>
+                <CommandProvider>
+                  <App />
+                </CommandProvider>
+              </DialogProvider>
+            </ToastProvider>
+          </KeybindProvider>
+        </RouteProvider>
+      </AuthProvider>
+    </ThemeProvider>
   ),
   {
     targetFps: 60,
@@ -47,6 +49,7 @@ function App() {
   const dialog = useDialog()
   const command = useCommandDialog()
   const toast = useToast()
+  const { theme, all, selected, mode, set, toggleMode } = useTheme()
 
   useKeyboard(async (evt) => {
     if (evt.name === "`") {
@@ -170,8 +173,30 @@ function App() {
     },
   ])
 
+  // Theme commands
+  command.register(() => [
+    ...all().map((themeName) => ({
+      title: `Theme: ${themeName}${selected === themeName ? " (active)" : ""}`,
+      value: `theme_${themeName}`,
+      category: "Appearance",
+      onSelect: () => {
+        set(themeName)
+        dialog.clear()
+      },
+    })),
+    {
+      title: `Toggle dark/light mode (${mode})`,
+      value: "theme_toggle_mode",
+      category: "Appearance",
+      onSelect: () => {
+        toggleMode()
+        dialog.clear()
+      },
+    },
+  ])
+
   return (
-    <box width={dimensions().width} backgroundColor={Theme.background}>
+    <box width={dimensions().width} backgroundColor={theme.background}>
       <box flexDirection="column" flexGrow={1}>
         <Switch>
           <Match when={auth.data.type === "unauthorized"}>
@@ -186,24 +211,24 @@ function App() {
       {/* status bar */}
       <box
         height={1}
-        backgroundColor={Theme.backgroundPanel}
+        backgroundColor={theme.backgroundPanel}
         flexDirection="row"
         justifyContent="space-between"
       >
         <box flexDirection="row">
           <box
             flexDirection="row"
-            backgroundColor={Theme.backgroundElement}
+            backgroundColor={theme.backgroundElement}
             paddingLeft={1}
             paddingRight={1}
           >
-            <text fg={Theme.textMuted}>open</text>
+            <text fg={theme.textMuted}>open</text>
             <text attributes={TextAttributes.BOLD}>cal </text>
           </box>
 
         </box>
         <box flexDirection="row">
-          <text paddingRight={1} fg={Theme.textMuted}>
+          <text paddingRight={1} fg={theme.textMuted}>
             ctrl+p
           </text>
         </box>
