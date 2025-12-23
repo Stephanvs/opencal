@@ -79,18 +79,21 @@ export function CalendarView() {
     }
 
     switch (key.name) {
-      case "t":
-        var newDate = navigation.setToday();
+      case "t": {
+        const newDate = navigation.setToday();
         logger.debug("t pressed", newDate);
         break;
-      case "l":
-        var newDate = navigation.toNext();
+      }
+      case "l": {
+        const newDate = navigation.toNext();
         logger.debug("l pressed", newDate);
         break;
-      case "h":
-        var newDate = navigation.toPrev();
-        logger.debug("h pressed", newDate)
+      }
+      case "h": {
+        const newDate = navigation.toPrev();
+        logger.debug("h pressed", newDate);
         break;
+      }
       case "j":
         navigation.setDate(addDays(cursorDate(), 1));
         logger.debug('next day', cursorDate());
@@ -144,12 +147,14 @@ export function CalendarView() {
         </box>
       </box>
 
-      <box borderStyle="rounded" flexDirection="row" justifyContent="space-between">
-        <For each={headers().weekdays}>
-          {({ value }) => (
-            <text>{format(value, "E")}</text>
-          )}
-        </For>
+       <box flexDirection="row">
+         <For each={headers().weekdays}>
+           {({ value }) => (
+             <box width={dayWidth()}>
+               <text>{format(value, "E")}</text>
+             </box>
+           )}
+         </For>
        </box>
 
       <box flexGrow={1}>
@@ -171,16 +176,11 @@ export function CalendarView() {
                       <box
                         width={dayWidth()}
                         style={{
-                          border: true,
-                          borderStyle: isSameDate(day.value, cursorDate())
-                            ? 'double'
-                            : 'single',
-                          borderColor: isCurrentDate
+                          backgroundColor: isSameDate(day.value, cursorDate())
                             ? Theme.accent
-                            : isCurrentMonth
-                              ? Theme.borderActive
-                              : Theme.borderSubtle,
-                          backgroundColor: Theme.background
+                            : isCurrentDate
+                              ? Theme.backgroundElement
+                              : Theme.background
                         }}>
                         <text attributes={
                           isCurrentDate
