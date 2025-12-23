@@ -34,7 +34,7 @@ render(
   {
     targetFps: 60,
     gatherStats: false,
-    useKittyKeyboard: true,
+    useKittyKeyboard: { },
     consoleOptions: {
       titleBarColor: "#cc33ff",
     },
