@@ -19,12 +19,12 @@ const ViewSelector = (props: { currentViewMode: CalendarViewType }) => {
           return (
             <box flexDirection="row">
               <box backgroundColor={
-                isActive() 
-                ? theme.primary 
-                : theme.border}>
-                <text fg={isActive() ? theme.text : theme.primary }>{view.shortcut}</text>
+                isActive()
+                ? theme.primary
+                : theme.backgroundPanel}>
+                <text fg={isActive() ? theme.border : theme.primary }>{view.shortcut}</text>
               </box>
-              <box backgroundColor={theme.backgroundElement}>
+              <box backgroundColor={theme.background}>
                 <text>{view.label}</text>
               </box>
             </box>
