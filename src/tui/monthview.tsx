@@ -11,6 +11,7 @@ import { CalendarViewType } from "../models";
 import logger from '@core/logger';
 import { useTheme } from "./context/theme";
 import { useDialog } from "./components/dialog";
+import { useCommandDialog } from "./components/dialog-command";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -23,6 +24,38 @@ export function CalendarView() {
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
 
   const auth = useAuth()
+
+  const command = useCommandDialog();
+
+  command.register(() => [
+    {
+      title: "Show month view",
+      value: "month_view",
+      category: "View",
+      onSelect: () => {
+        view.showMonthView();
+        dialog.clear();
+      },
+    },
+    {
+      title: "Show week view",
+      value: "week_view",
+      category: "View",
+      onSelect: () => {
+        view.showWeekView();
+        dialog.clear();
+      },
+    },
+    {
+      title: "Show day view",
+      value: "day_view",
+      category: "View",
+      onSelect: () => {
+        view.showDayView();
+        dialog.clear();
+      },
+    },
+  ]);
 
   const dayWidth = createMemo(() => {
     const totalWidth = dimensions().width;
