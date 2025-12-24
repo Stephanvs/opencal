@@ -29,6 +29,15 @@ export function CalendarView() {
 
   command.register(() => [
     {
+      title: "Go to today",
+      value: "today",
+      category: "Navigation",
+      onSelect: () => {
+        navigation.setToday();
+        dialog.clear();
+      },
+    },
+    {
       title: "Show month view",
       value: "month_view",
       category: "View",
