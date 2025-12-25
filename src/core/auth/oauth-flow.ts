@@ -1,19 +1,9 @@
-/**
- * OAuth Flow Implementation
- *
- * Handles OAuth 2.0 authorization code flow with PKCE
- */
-
-import { google } from 'googleapis';
-import { OAuth2Client, CodeChallengeMethod } from 'google-auth-library';
-import { createServer, type Server } from 'http';
-import { URL } from 'url';
+import { createServer, IncomingMessage, ServerResponse, type Server } from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import type { TokenData } from './types';
-import { generatePKCE } from "@openauthjs/openauth/pkce";
 import logger from '@core/logger';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,77 +15,10 @@ export interface OAuthFlowResult {
   error?: string;
 }
 
-export const CLIENT_ID = '725023205531-qi142osnns4o1n503hj0001lt9smf44d.apps.googleusercontent.com';
-const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.readonly',
-  'https://www.googleapis.com/auth/calendar.events',
-]
-
-export function createGoogleClient() {
-  return new google.auth.OAuth2({
-    client_id: CLIENT_ID,
-    redirectUri: "http://localhost:3000/auth/google/callback",
-    transporterOptions: {
-      fetchImplementation: fetch
-    }
-  });
-}
-
-/**
- * Create a Google Calendar API client with authenticated credentials
- */
-export function createCalendarClient(token: TokenData) {
-  const oauth2Client = createGoogleClient();
-  oauth2Client.setCredentials({
-    access_token: token.access,
-    refresh_token: token.refresh,
-  });
-
-  return google.calendar({ version: 'v3', auth: oauth2Client });
-}
-/**
- * Start OAuth flow for Google using PKCE with local server
- */
-export async function authorize(): Promise<OAuthFlowResult> {
-  try {
-    const pkce = await generatePKCE();
-    const client = createGoogleClient();
-    const authUrl = client.generateAuthUrl({
-      access_type: 'offline', // Get refresh token
-      scope: SCOPES,
-      prompt: 'consent', // Force consent screen to get refresh token
-      code_challenge: pkce.challenge,
-      code_challenge_method: CodeChallengeMethod.S256,
-      state: pkce.verifier,
-    });
-
-    logger.info('\nOpening browser for authorization...');
-    logger.info('If browser doesn\'t open, visit this URL:\n');
-    logger.info(authUrl);
-    logger.info('');
-
-    await openBrowser(authUrl);
-
-    // Start local server and wait for callback
-    const code = await waitForOAuthCallback();
-    const tokens = await exchangeCodeForTokens(client, code, pkce.verifier);
-
-    return {
-      success: true,
-      tokens,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    };
-  }
-}
-
 /**
  * Start local HTTP server and wait for OAuth callback
  */
-function waitForOAuthCallback(): Promise<string> {
+export function waitForOAuthCallback<T>(cont: (req: IncomingMessage, res: ServerResponse<IncomingMessage>) => T | Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     let server: Server | null = null;
     const timeout = setTimeout(() => {
@@ -105,50 +28,18 @@ function waitForOAuthCallback(): Promise<string> {
 
     server = createServer(async (req, res) => {
       try {
-        const url = new URL(req.url!, 'http://localhost:3000');
+        const result = await cont(req, res);
+        clearTimeout(timeout);
+        if (server) server.close();
+        resolve(result);
 
-        if (url.pathname === '/auth/google/callback') {
-          const code = url.searchParams.get('code');
-          const error = url.searchParams.get('error');
-
-          if (error) {
-            res.writeHead(400, { 'Content-Type': 'text/html' });
-            const html = fs.readFileSync(path.join(__dirname, 'html', 'error-oauth.html'), 'utf8').replace('{{error}}', error);
-            res.end(html);
-            clearTimeout(timeout);
-            if (server) server.close();
-            reject(new Error(`OAuth error: ${error}`));
-            return;
-          }
-
-          if (!code) {
-            res.writeHead(400, { 'Content-Type': 'text/html' });
-            const html = fs.readFileSync(path.join(__dirname, 'html', 'error-no-code.html'), 'utf8');
-            res.end(html);
-            clearTimeout(timeout);
-            if (server) server.close();
-            reject(new Error('No authorization code received'));
-            return;
-          }
-
-          // Success: Show success page and return code
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          const html = fs.readFileSync(path.join(__dirname, 'html', 'success.html'), 'utf8');
-          res.end(html);
-
-          clearTimeout(timeout);
-          if (server) server.close();
-
-          resolve(code);
-        } else {
-          res.writeHead(404);
-          res.end('Not found');
-        }
       } catch (error) {
-        res.writeHead(500, { 'Content-Type': 'text/html' });
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        const html = fs.readFileSync(path.join(__dirname, 'html', 'error-general.html'), 'utf8').replace('{{message}}', message);
-        res.end(html);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'text/html' });
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          const html = fs.readFileSync(path.join(__dirname, 'html', 'error-general.html'), 'utf8').replace('{{message}}', message);
+          res.end(html);
+        }
         clearTimeout(timeout);
         if (server) server.close();
         reject(error);
@@ -166,40 +57,7 @@ function waitForOAuthCallback(): Promise<string> {
   });
 }
 
-/**
- * Exchange authorization code for tokens
- */
-async function exchangeCodeForTokens(oauthClient: OAuth2Client, code: string, verifier: string): Promise<TokenData> {
-  try {
-    const result = await oauthClient.getToken({
-      code,
-      codeVerifier: verifier
-    });
-    const tokens = result.tokens;
-
-    if (!tokens.access_token || !tokens.refresh_token) {
-      throw new Error('Failed to receive valid tokens');
-    }
-
-    const tokenData: TokenData = {
-      access: tokens.access_token,
-      refresh: tokens.refresh_token,
-      expiresIn: tokens.expiry_date ? Math.floor((tokens.expiry_date - Date.now()) / 1000) : 3600,
-      expiryTimestamp: tokens.expiry_date || Date.now() + 3600000,
-      scopes: tokens.scope?.split(' ') || [],
-    };
-
-    return tokenData;
-  } catch (error: any) {
-    logger.error('Token exchange error:', error);
-    throw new Error(error?.response?.data?.error_description || error?.message || 'Token exchange failed');
-  }
-}
-
-/**
- * Try to open URL in default browser
- */
-async function openBrowser(url: string): Promise<void> {
+export async function openBrowser(url: string): Promise<void> {
   const { platform } = process;
   let command: string;
 

@@ -6,9 +6,10 @@
  */
 
 import type { ArgumentsCamelCase } from 'yargs';
-import { authorize } from '@core/auth/oauth-flow';
-import { saveProviderTokens } from '@core/auth';
-import type { Provider } from '@core/auth';
+import { openBrowser, waitForOAuthCallback } from '@core/auth/oauth-flow';
+import { saveAccountTokens, extractAccountInfo } from '@core/auth/storage';
+import { getAuthProvider, listAuthProviders } from '@core/auth/providers';
+import { ensureAuthProvidersLoaded } from '@core/auth/providers/context';
 import logger from '@core/logger';
 
 interface LoginArgs {
@@ -16,46 +17,48 @@ interface LoginArgs {
 }
 
 export async function loginCommand(argv: ArgumentsCamelCase<LoginArgs>) {
-  const provider = argv.provider as Provider;
+  await ensureAuthProvidersLoaded();
 
-  logger.info(`\nAuthenticating with ${provider}...\n`);
+  const providerId = argv.provider;
 
-  if (provider === 'google') {
-    await handleGoogleLogin();
-  } else if (provider === 'microsoft') {
-    logger.info('Microsoft authentication not yet implemented.');
-    logger.info('Coming soon!\n');
-    process.exit(1);
-  } else {
-    logger.info(`Unknown provider: ${provider}`);
-    logger.info('Supported providers: google, microsoft\n');
+  logger.info(`Authenticating with ${providerId}...`);
+
+  const provider = getAuthProvider(providerId);
+  if (!provider) {
+    const providers = listAuthProviders();
+    logger.info(`Unknown provider: ${providerId}`);
+    logger.info(`Supported providers: ${providers.map(p => p.id).join(', ')}`);
     process.exit(1);
   }
-}
 
-async function handleGoogleLogin() {
   try {
-    const result = await authorize();
+    const config = provider.defaultConfig;
+
+    const ctx = {
+      openBrowser,
+      waitForOAuthCallback,
+      logger,
+    };
+
+    const result = await provider.authorize(config, ctx);
 
     if (!result.success || !result.tokens) {
-      logger.info(`\nAuthentication failed: ${result.error}\n`);
+      logger.info(`Authentication failed: ${result.error}`);
       process.exit(1);
     }
 
-    // Save tokens
-    saveProviderTokens('google', {
-      type: 'oauth',
-      tokens: result.tokens,
-    });
+    // Extract account info and save tokens
+    const accountInfo = extractAccountInfo(result.tokens, providerId);
+    saveAccountTokens(providerId, accountInfo, result.tokens);
 
-    logger.info('\nAuthentication successful!');
-    logger.info('Tokens have been saved.\n');
-    logger.info('You can now use OpenCal to access your Google Calendar.');
-    logger.info('Run "opencal auth list" to see your authentication status.\n');
+    logger.info('Authentication successful!');
+    logger.info('Tokens have been saved.');
+    logger.info(`You can now use OpenCal to access your ${provider.label} Calendar.`);
+    logger.info('Run "opencal auth list" to see your authentication status.');
 
     process.exit(0);
   } catch (error) {
-    logger.info(`\nAuthentication error: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+    logger.info(`Authentication error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     process.exit(1);
   }
 }

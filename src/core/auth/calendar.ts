@@ -5,7 +5,7 @@
  */
 
 import type { TokenData } from './types';
-import { createCalendarClient } from './oauth-flow';
+import { createCalendarClient } from './providers/google';
 
 /**
  * Fetch calendar events for a given time range
@@ -38,7 +38,7 @@ export async function fetchCalendarEvents(
  * Get list of calendars
  */
 export async function fetchCalendars(token: TokenData) {
-  const calendar = createCalendarClient(token);
+  const calendar = createCalendarClient(token) as any;
 
   try {
     const response = await calendar.calendarList.list();

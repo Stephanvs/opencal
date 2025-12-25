@@ -9,28 +9,32 @@ import { AuthProvider, useAuth } from "./context/auth"
 import { CommandProvider, useCommandDialog } from "./components/dialog-command"
 import { NotAuthenticated } from "./context/not-authenticated"
 import { KeybindProvider } from "./context/keybind"
-import { authorize } from "@core/auth/oauth-flow"
+import { AuthProviders } from "@core/auth/providers/context"
+import { listAuthProviders } from "@core/auth/providers"
+import { openBrowser, waitForOAuthCallback } from "@core/auth/oauth-flow"
 import logger from "@core/logger"
 import { Toast, ToastProvider, useToast } from "./ui/toast"
 import "opentui-spinner/solid";
 
 render(
   () => (
-    <ThemeProvider mode="dark">
-      <AuthProvider>
-        <RouteProvider>
-          <KeybindProvider>
-            <ToastProvider>
-              <DialogProvider>
-                <CommandProvider>
-                  <App />
-                </CommandProvider>
-              </DialogProvider>
-            </ToastProvider>
-          </KeybindProvider>
-        </RouteProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProviders>
+      <ThemeProvider mode="dark">
+        <AuthProvider>
+          <RouteProvider>
+            <KeybindProvider>
+              <ToastProvider>
+                <DialogProvider>
+                  <CommandProvider>
+                    <App />
+                  </CommandProvider>
+                </DialogProvider>
+              </ToastProvider>
+            </KeybindProvider>
+          </RouteProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </AuthProviders>
   ),
   {
     targetFps: 60,
@@ -82,7 +86,18 @@ function App() {
             ))
 
             try {
-              const result = await authorize()
+              const providers = listAuthProviders()
+              const provider = providers.find(p => p.id === 'google')
+              if (!provider) {
+                throw new Error('Google provider not found')
+              }
+
+              const result = await provider.authorize(provider.defaultConfig, {
+                openBrowser,
+                waitForOAuthCallback,
+                logger,
+              })
+
               if (result.success && result.tokens) {
                 auth.google_login(result.tokens)
                 dialog.clear()
