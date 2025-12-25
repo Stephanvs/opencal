@@ -19,16 +19,15 @@ yargs(hideBin(process.argv))
     (yargs) => {
       return yargs
         .command(
-          'login [provider]',
-          'Authenticate with a calendar provider',
-          (yargs) => {
-            return yargs.positional('provider', {
-              describe: 'Calendar provider to authenticate with',
-              type: 'string',
-              default: 'google',
-              choices: ['google', 'microsoft'],
-            });
-          },
+           'login [provider]',
+           'Authenticate with a calendar provider',
+           (yargs) => {
+             return yargs.positional('provider', {
+               describe: 'Calendar provider to authenticate with',
+               type: 'string',
+               default: 'google',
+             });
+           },
           loginCommand
         )
         .command(
@@ -38,15 +37,14 @@ yargs(hideBin(process.argv))
           listCommand
         )
         .command(
-          'logout [provider]',
-          'Remove authentication credentials',
-          (yargs) => {
-            return yargs.positional('provider', {
-              describe: 'Provider to logout from (omit to logout from all)',
-              type: 'string',
-              choices: ['google', 'microsoft'],
-            });
-          },
+           'logout [provider]',
+           'Remove authentication credentials',
+           (yargs) => {
+             return yargs.positional('provider', {
+               describe: 'Provider to logout from (omit to logout from all)',
+               type: 'string',
+             });
+           },
           logoutCommand
         )
         .demandCommand(1, 'Please specify an auth subcommand')

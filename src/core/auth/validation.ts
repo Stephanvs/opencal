@@ -4,7 +4,7 @@
  * Helper functions for validating and checking token status.
  */
 
-import type { TokenData, ProviderTokens } from './types';
+import type { TokenData, AccountTokens } from './types';
 
 /**
  * Check if a token is expired
@@ -59,22 +59,27 @@ export function getTimeUntilExpiry(tokenData: TokenData): string {
 }
 
 /**
- * Validate that ProviderTokens has all required fields
+ * Validate that AccountTokens has all required fields
  *
- * @param providerTokens - Tokens to validate
+ * @param accountTokens - Tokens to validate
  * @returns true if valid, false otherwise
  */
-export function isValidProviderTokens(providerTokens: any): providerTokens is ProviderTokens {
-  if (!providerTokens || typeof providerTokens !== 'object') {
+export function isValidAccountTokens(accountTokens: any): accountTokens is AccountTokens {
+  if (!accountTokens || typeof accountTokens !== 'object') {
     return false;
   }
 
-  if (providerTokens.type !== 'oauth') {
+  if (accountTokens.type !== 'oauth') {
     return false;
   }
 
-  const tokens = providerTokens.tokens;
+  const tokens = accountTokens.tokens;
   if (!tokens || typeof tokens !== 'object') {
+    return false;
+  }
+
+  const account = accountTokens.account;
+  if (!account || typeof account !== 'object') {
     return false;
   }
 
@@ -84,7 +89,10 @@ export function isValidProviderTokens(providerTokens: any): providerTokens is Pr
     typeof tokens.expiresIn === 'number' &&
     typeof tokens.expiryTimestamp === 'number' &&
     Array.isArray(tokens.scopes) &&
-    tokens.scopes.every((s: any) => typeof s === 'string')
+    tokens.scopes.every((s: any) => typeof s === 'string') &&
+    typeof account.id === 'string' &&
+    typeof account.email === 'string' &&
+    typeof account.provider === 'string'
   );
 }
 

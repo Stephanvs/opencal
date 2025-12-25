@@ -1,51 +1,49 @@
-/**
- * Token Storage Types
- *
- * Type definitions for authentication token storage.
- * Uses OpenAuth's standard Tokens interface for provider-agnostic token handling.
- */
-
 import type { Tokens } from '@openauthjs/openauth/client';
 
 /**
  * Extended token data with additional metadata
- *
- * OpenAuth's Tokens interface provides:
- * - access: string (access token)
- * - refresh: string (refresh token)
- * - expiresIn: number (seconds until expiry)
- *
- * We extend it with:
- * - expiryTimestamp: absolute timestamp for easier checking
- * - scopes: granted OAuth scopes
  */
 export interface TokenData extends Tokens {
   /** Absolute expiry timestamp in milliseconds since epoch */
   expiryTimestamp: number;
   /** OAuth scopes granted */
   scopes: string[];
+  /** ID token for user info (if available) */
+  idToken?: string;
 }
 
 /**
- * Provider-specific token storage
+ * Account information extracted from OAuth tokens
  */
-export interface ProviderTokens {
+export interface AccountInfo {
+  /** Provider-specific unique account ID */
+  id: string;
+  /** Account email address */
+  email: string;
+  /** Display name (optional) */
+  name?: string;
+  /** Profile picture URL (optional) */
+  picture?: string;
+  /** Provider type */
+  provider: string;
+}
+
+/**
+ * Account-specific token storage
+ */
+export interface AccountTokens {
   /** Authentication type (always 'oauth' for now) */
   type: 'oauth';
   /** Token data using OpenAuth's standard format */
   tokens: TokenData;
+  /** Account metadata */
+  account: AccountInfo;
 }
 
 /**
- * Main auth.json structure
- * Supports multiple providers
+ * Auth storage structure supporting multiple accounts
+ * Maps provider -> accountId -> account tokens
  */
 export interface AuthStorage {
-  google?: ProviderTokens;
-  microsoft?: ProviderTokens;
+  [provider: string]: Record<string, AccountTokens>;
 }
-
-/**
- * Supported calendar providers
- */
-export type Provider = 'google' | 'microsoft';

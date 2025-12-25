@@ -5,7 +5,7 @@
  */
 
 import type { ArgumentsCamelCase } from 'yargs';
-import { deleteProviderTokens, deleteAuthStorage, hasProviderAuth, hasAnyAuth, type Provider } from '@core/auth';
+import { readAuthStorage, getAllAccounts, removeAccount, deleteAuthStorage, hasProviderAuth, hasAnyAuth } from '@core/auth/storage';
 import logger from '@core/logger';
 
 interface LogoutArgs {
@@ -13,7 +13,7 @@ interface LogoutArgs {
 }
 
 export async function logoutCommand(argv: ArgumentsCamelCase<LogoutArgs>) {
-  const provider = argv.provider as Provider | undefined;
+  const provider = argv.provider;
 
   if (!hasAnyAuth()) {
     logger.info('\nNo authentication data found.');
@@ -29,9 +29,23 @@ export async function logoutCommand(argv: ArgumentsCamelCase<LogoutArgs>) {
       process.exit(1);
     }
 
-    deleteProviderTokens(provider);
+    // Remove all accounts for this provider
+    const storage = readAuthStorage();
+    const providerData = storage[provider];
+    if (providerData) {
+      const accountIds = Object.keys(providerData);
+      for (const accountId of accountIds) {
+        removeAccount(provider, accountId);
+      }
+    }
+
+    // If no auth left, delete the file
+    if (!hasAnyAuth()) {
+      deleteAuthStorage();
+    }
+
     logger.info(`\nLogged out from ${provider}.`);
-    logger.info('Tokens have been removed.\n');
+    logger.info('All accounts have been removed.\n');
   } else {
     // Logout all providers
     deleteAuthStorage();

@@ -10,20 +10,23 @@ import { CommandProvider, useCommandDialog } from "./components/dialog-command";
 import { NotAuthenticated } from "./context/not-authenticated";
 import logger from '@core/logger';
 import { KeybindProvider } from "./context/keybind";
+import { AuthProviders } from "@core/auth/providers/context";
 
 render(
   () =>
-    <AuthProvider>
-      <RouteProvider>
-        <KeybindProvider>
-          <DialogProvider>
-            <CommandProvider>
-              <App />
-            </CommandProvider>
-          </DialogProvider>
-        </KeybindProvider>
-      </RouteProvider>
-    </AuthProvider>,
+    <AuthProviders>
+      <AuthProvider>
+        <RouteProvider>
+          <KeybindProvider>
+            <DialogProvider>
+              <CommandProvider>
+                <App />
+              </CommandProvider>
+            </DialogProvider>
+          </KeybindProvider>
+        </RouteProvider>
+      </AuthProvider>
+    </AuthProviders>,
   {
     targetFps: 60,
     gatherStats: false,
