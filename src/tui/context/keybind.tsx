@@ -5,7 +5,7 @@ import { pipe, mapValues } from "remeda"
 import { createSimpleContext } from "./create-simple-context"
 import { Keybind } from "@tui/keyboard/keybind"
 import { DEFAULT_KEYBINDS, type KeybindsConfig } from "@tui/keyboard/keybinds-config"
-import type { ParsedKey, Renderable } from "@opentui/core"
+import { InputRenderable, TextareaRenderable, type ParsedKey, type Renderable } from "@opentui/core"
 
 export const { use: useKeybind, provider: KeybindProvider } = createSimpleContext({
   name: "Keybind",
@@ -50,8 +50,15 @@ export const { use: useKeybind, provider: KeybindProvider } = createSimpleContex
       }
     }
 
+    function isTextInputFocused(): boolean {
+      const focused = renderer.currentFocusedRenderable
+      return focused instanceof InputRenderable || focused instanceof TextareaRenderable
+    }
+
     useKeyboard(async (evt: ParsedKey) => {
       if (!store.leader && result.match("leader", evt)) {
+        // Don't activate leader mode when typing in an input field
+        if (isTextInputFocused()) return
         leader(true)
         return
       }
