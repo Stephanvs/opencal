@@ -120,6 +120,15 @@ function App() {
   // System commands (always available)
   command.register(() => [
     {
+      title: "Quit",
+      description: "Exit the application",
+      value: "app_quit",
+      category: "System",
+      onSelect: () => {
+        process.exit(0)
+      },
+    },
+    {
       title: "Toggle debug panel",
       value: "app_debug",
       category: "System",
