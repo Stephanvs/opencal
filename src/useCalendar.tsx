@@ -11,18 +11,25 @@ export interface UseCalendarOptions {
   defaultViewType?: CalendarViewType;
 }
 
+// Shared signal that triggers re-render at midnight
+const [midnight, setMidnight] = createSignal(0);
+const scheduleMidnight = () => {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  setTimeout(() => { setMidnight(n => n + 1); scheduleMidnight(); }, next.getTime() - now.getTime() + 100);
+};
+scheduleMidnight();
+
 export function useCalendar({
   defaultDate,
   defaultWeekStart = 0,
   defaultViewType = CalendarViewType.Month,
 }: UseCalendarOptions = {}) {
-  // const baseDate = defaultDate != null ? new Date(defaultDate) : new Date();
-  const baseDate = createMemo(() => {
-    return defaultDate != null ? new Date(defaultDate) : new Date();
-  });
+  const baseDate = defaultDate != null ? new Date(defaultDate) : new Date();
 
   const [weekStartsOn, setWeekStartsOn] = createSignal(defaultWeekStart);
-  const [cursorDate, setCursorDate] = createSignal(baseDate());
+  const [cursorDate, setCursorDate] = createSignal(baseDate);
   const [viewType, setViewType] = createSignal(defaultViewType);
 
   const calendar = createMemo(() => createCalendarInfo(cursorDate(), { weekStartsOn: weekStartsOn() }));
@@ -45,14 +52,14 @@ export function useCalendar({
     }
   };
 
-  const createMatrix = (weeksInMonth: number) => ({
+  const createMatrix = (weeksInMonth: number, today: Date) => ({
     value: range(weeksInMonth).map((weekIndex) => {
       return {
         key: genId("weeks"),
         value: range(7).map((dayIndex) => {
           return pipeWith(
             getDateCellByIndex(weekIndex, dayIndex),
-            withDateProps(baseDate(), cursorDate()),
+            withDateProps(today, cursorDate()),
             withKeyProps("days"),
           );
         }),
@@ -61,7 +68,8 @@ export function useCalendar({
   });
 
   const getBody = (viewType: CalendarViewType) => {
-    const matrix = createMatrix(weeksInMonth());
+    midnight(); // Subscribe to midnight updates
+    const matrix = createMatrix(weeksInMonth(), new Date());
     const { weekIndex, dateIndex } = today();
 
     return {
