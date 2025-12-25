@@ -38,7 +38,7 @@ function init() {
     logger.info('auth:onMount entry, accounts: ', accounts)
     if (accounts.length > 0) {
       const account = accounts[0] // Use first account for now
-      if (account) {
+      if (account?.tokens) {
         const isValid = await validateToken(account.tokens)
         if (isValid) {
           logger.info('auth:onMount isValid:', isValid)

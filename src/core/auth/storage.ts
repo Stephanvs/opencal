@@ -24,15 +24,25 @@ export function readAuthStorage(): AuthStorage {
     const content = readFileSync(filePath, 'utf-8');
     const data = JSON.parse(content);
 
-    // Migrate from old format with "accounts" wrapper to new format
+    // Migrate from old formats to new format
     const migrated: AuthStorage = {};
     for (const [provider, providerData] of Object.entries(data)) {
       if (providerData && typeof providerData === 'object' && 'accounts' in providerData) {
         // Old format: { google: { accounts: { accountId: AccountTokens } } }
         migrated[provider] = (providerData as any).accounts;
-      } else {
-        // New format: { google: { accountId: AccountTokens } }
-        migrated[provider] = providerData as Record<string, AccountTokens>;
+      } else if (providerData && typeof providerData === 'object') {
+        // New format or mixed format - filter out legacy root-level entries
+        const cleaned: Record<string, AccountTokens> = {};
+        for (const [key, value] of Object.entries(providerData as Record<string, unknown>)) {
+          // Only include entries that have both 'tokens' and 'account' properties
+          // Skip legacy entries that have 'type' and 'tokens' at root level without 'account'
+          if (value && typeof value === 'object' && 'tokens' in value && 'account' in value) {
+            cleaned[key] = value as AccountTokens;
+          }
+        }
+        if (Object.keys(cleaned).length > 0) {
+          migrated[provider] = cleaned;
+        }
       }
     }
 
@@ -212,7 +222,15 @@ export function getAllAccounts(provider: string): AccountTokens[] {
     return [];
   }
 
-  return Object.values(providerData);
+  // Filter to only valid AccountTokens entries (must have both tokens and account)
+  return Object.values(providerData).filter(
+    (entry): entry is AccountTokens => 
+      entry != null && 
+      typeof entry === 'object' && 
+      'tokens' in entry && 
+      'account' in entry &&
+      entry.account != null
+  );
 }
 
 

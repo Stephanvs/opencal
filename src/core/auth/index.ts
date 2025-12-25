@@ -1,4 +1,6 @@
-export function extractAccountInfo(tokens: import('./types').TokenData, provider: string): import('./types').AccountInfo {
+import { type TokenData, type AccountInfo } from './types';
+
+export function extractAccountInfo(tokens: TokenData, provider: string): AccountInfo {
   let email = 'unknown@example.com';
   let name: string | undefined;
   let picture: string | undefined;
@@ -22,7 +24,6 @@ export function extractAccountInfo(tokens: import('./types').TokenData, provider
       id = email;
     }
   } else {
-    // Fallback for Microsoft or if no ID token
     id = email;
   }
 

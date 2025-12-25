@@ -68,69 +68,71 @@ function App() {
   })
 
   // Register commands based on auth state
-  command.register(() => {
-    if (auth.data.type === "unauthorized") {
-      return [
-        {
-          title: "Authenticate with Google",
-          value: "auth_google_login",
-          category: "Authentication",
-          suggested: true,
-          onSelect: async () => {
-            // Show waiting dialog
-            dialog.replace(() => (
-              <box paddingLeft={3} paddingRight={3} paddingTop={1} paddingBottom={1}>
-                <spinner name="dots" color={theme.primary} />
-                <text marginLeft={1}>Waiting for browser...</text>
-              </box>
-            ))
+  command.register(() => [
+    {
+      title: "Add Google Account",
+      value: "auth_google_login",
+      category: "Accounts",
+      suggested: true,
+      onSelect: async () => {
+        dialog.replace(() => (
+          <box
+            flexDirection="row"
+            paddingLeft={3}
+            paddingRight={3}
+            paddingTop={1}
+            paddingBottom={1}
+          >
+            <spinner name="dots" color={theme.primary} />
+            <text marginLeft={1}>Waiting for browser...</text>
+          </box>
+        ))
 
-            try {
-              const providers = listAuthProviders()
-              const provider = providers.find(p => p.id === 'google')
-              if (!provider) {
-                throw new Error('Google provider not found')
-              }
+        try {
+          const providers = listAuthProviders()
+          const provider = providers.find(p => p.id === 'google')
+          if (!provider) {
+            throw new Error('Google provider not found')
+          }
 
-              const result = await provider.authorize(provider.defaultConfig, {
-                openBrowser,
-                waitForOAuthCallback,
-                logger,
-              })
+          const result = await provider.authorize(provider.defaultConfig, {
+            openBrowser,
+            waitForOAuthCallback,
+            logger,
+          })
 
-              if (result.success && result.tokens) {
-                auth.google_login(result.tokens)
-                dialog.clear()
-                toast.success("Successfully authenticated with Google!")
-              } else {
-                logger.error("OAuth failed:", result.error)
-                dialog.clear()
-                toast.error(new Error(result.error ?? "OAuth authentication failed"))
-              }
-            } catch (error) {
-              logger.error("OAuth error:", error)
-              dialog.clear()
-              toast.error(error)
-            }
-          },
-        },
-      ]
+          if (result.success && result.tokens) {
+            auth.google_login(result.tokens)
+            dialog.clear()
+            toast.success("Successfully authenticated with Google!")
+          } else {
+            logger.error("OAuth failed:", result.error)
+            dialog.clear()
+            toast.error(new Error(result.error ?? "OAuth authentication failed"))
+          }
+        } catch (error) {
+          logger.error("OAuth error:", error)
+          dialog.clear()
+          toast.error(error)
+        }
+      },
     }
+  ])
 
-    // Authenticated state
-    return [
+  if (auth.data.type !== "unauthorized") {
+    command.register(() => [
       {
         title: "Logout",
         value: "auth_logout",
-        category: "Authentication",
+        category: "Accounts",
         onSelect: () => {
           auth.logout()
           dialog.clear()
           toast.info("You have been logged out")
-        },
-      },
-    ]
-  })
+        }
+      }
+    ])
+  }
 
   // System commands (always available)
   command.register(() => [
