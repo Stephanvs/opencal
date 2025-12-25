@@ -12,6 +12,8 @@ import logger from '@core/logger';
 import { useTheme } from "./context/theme";
 import { useDialog } from "./components/dialog";
 import { useCommandDialog } from "./components/dialog-command";
+import { DialogPrompt } from "./components/dialog-prompt";
+import { parseDate } from "chrono-node";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -28,6 +30,26 @@ export function CalendarView() {
   const command = useCommandDialog();
 
   command.register(() => [
+    {
+      title: "Go to",
+      value: "go_to",
+      category: "Navigation",
+      onSelect: () => {
+        dialog.replace(() => <DialogPrompt title="Go to"
+            description={<text style={{ fg: theme.textMuted }}>A natural language date</text>}
+            placeholder="Monday, next week, or December 31"
+            onConfirm={(date) => {
+                const parsed = parseDate(date);
+                if (parsed) {
+                    navigation.setDate(parsed);
+                }
+
+                dialog.clear();
+            } 
+          }
+        />);
+      },
+    },
     {
       title: "Go to today",
       value: "today",
