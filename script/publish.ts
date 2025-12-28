@@ -48,7 +48,7 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
     {
       name: pkg.name,
       version: Script.version,
-      description: "Terminal-based calendar application",
+      description: "Powerful TUI to manage your calendar",
       bin: {
         [pkg.name]: `./bin/${pkg.name}`,
       },
