@@ -1,18 +1,19 @@
-import fs from 'fs';
-import path from 'path';
-import { google } from 'googleapis';
-import { OAuth2Client, CodeChallengeMethod } from 'google-auth-library';
-import { generatePKCE } from '@openauthjs/openauth/pkce';
-import type { TokenData } from '../types';
-import { registerAuthProvider, type AuthProvider, type AuthProviderConfig } from './index';
+import fs from "fs";
+import path from "path";
+import { google } from "googleapis";
+import { CodeChallengeMethod } from "google-auth-library";
+import { generatePKCE } from "@openauthjs/openauth/pkce";
+import { register, type AuthProvider, type AuthProviderConfig } from "./index";
+import type { Auth } from "@core/auth";
 
-export const CLIENT_ID = '725023205531-qi142osnns4o1n503hj0001lt9smf44d.apps.googleusercontent.com';
+export const CLIENT_ID =
+  "725023205531-qi142osnns4o1n503hj0001lt9smf44d.apps.googleusercontent.com";
 const DEFAULT_SCOPES = [
-  'https://www.googleapis.com/auth/calendar.readonly',
-  'https://www.googleapis.com/auth/calendar.events',
-  'openid',
-  'profile',
-  'email',
+  "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events",
+  "openid",
+  "profile",
+  "email",
 ];
 
 export function createGoogleClient(config: AuthProviderConfig) {
@@ -25,39 +26,42 @@ export function createGoogleClient(config: AuthProviderConfig) {
   });
 }
 
-function mapTokens(tokens: any): TokenData {
+function mapTokens(tokens: any): Auth.Info {
   if (!tokens.access_token || !tokens.refresh_token) {
-    throw new Error('Failed to receive valid tokens');
+    throw new Error("Failed to receive valid tokens");
   }
 
   return {
+    type: "oauth",
+    id: tokens.id_token?.sub,
     access: tokens.access_token,
     refresh: tokens.refresh_token,
-    expiresIn: tokens.expiry_date
-      ? Math.floor((tokens.expiry_date - Date.now()) / 1000)
-      : 3600,
-    expiryTimestamp: tokens.expiry_date || Date.now() + 3600000,
-    scopes: tokens.scope?.split(' ') || [],
-    ...(tokens.id_token && { idToken: tokens.id_token }),
+    expires: tokens.expiry_date,
+    // expiresIn: tokens.expiry_date
+    //   ? Math.floor((tokens.expiry_date - Date.now()) / 1000)
+    //   : 3600,
+    // expiryTimestamp: tokens.expiry_date || Date.now() + 3600000,
+    // scopes: tokens.scope?.split(" ") || [],
+    // ...(tokens.id_token && { idToken: tokens.id_token }),
   };
 }
 
 const googleProvider: AuthProvider = {
-  id: 'google',
-  label: 'Google',
+  id: "google",
+  label: "Google",
   defaultScopes: DEFAULT_SCOPES,
   defaultConfig: {
     clientId: CLIENT_ID,
-    redirectUri: 'http://localhost:3000/auth/google/callback',
+    redirectUri: "http://localhost:3000/auth/google/callback",
     scopes: DEFAULT_SCOPES,
   },
 
   async getAuthorizationUrl(config, { state, codeChallenge }) {
     const client = createGoogleClient(config);
     return client.generateAuthUrl({
-      access_type: 'offline',
+      access_type: "offline",
       scope: config.scopes?.length ? config.scopes : DEFAULT_SCOPES,
-      prompt: 'consent',
+      prompt: "consent",
       code_challenge: codeChallenge,
       code_challenge_method: CodeChallengeMethod.S256,
       state,
@@ -81,7 +85,7 @@ const googleProvider: AuthProvider = {
         refresh_token: tokens.refresh,
       });
       const { credentials } = await client.refreshAccessToken();
-      
+
       // Merge new credentials with existing tokens, preserving refresh token if not returned
       return {
         ...tokens,
@@ -107,25 +111,29 @@ const googleProvider: AuthProvider = {
         codeChallenge: challenge,
       });
 
-      ctx.logger.info('\nOpening browser for Google authorization...');
-      ctx.logger.info('If browser does not open, visit:\n');
+      ctx.logger.info("\nOpening browser for Google authorization...");
+      ctx.logger.info("If browser does not open, visit:\n");
       ctx.logger.info(authUrl);
-      ctx.logger.info('');
+      ctx.logger.info("");
 
       await ctx.openBrowser(authUrl);
 
       const code = await ctx.waitForOAuthCallback((req, res) => {
         const url = new URL(req.url!, config.redirectUri);
 
-        if (url.pathname === '/auth/google/callback') {
-          const returnedCode = url.searchParams.get('code');
-          const error = url.searchParams.get('error');
+        if (url.pathname === "/auth/google/callback") {
+          const returnedCode = url.searchParams.get("code");
+          const error = url.searchParams.get("error");
 
           if (error) {
             if (!res.headersSent) {
-              res.writeHead(400, { 'Content-Type': 'text/html' });
-            const html = fs.readFileSync(path.join(__dirname, '..', 'html', 'error-oauth.html'), 'utf8')
-              .replace('{{error}}', error);
+              res.writeHead(400, { "Content-Type": "text/html" });
+              const html = fs
+                .readFileSync(
+                  path.join(__dirname, "..", "html", "error-oauth.html"),
+                  "utf8",
+                )
+                .replace("{{error}}", error);
               res.end(html);
             }
             throw new Error(`OAuth error: ${error}`);
@@ -133,16 +141,22 @@ const googleProvider: AuthProvider = {
 
           if (!returnedCode) {
             if (!res.headersSent) {
-              res.writeHead(400, { 'Content-Type': 'text/html' });
-              const html = fs.readFileSync(path.join(__dirname, '..', 'html', 'error-no-code.html'), 'utf8');
+              res.writeHead(400, { "Content-Type": "text/html" });
+              const html = fs.readFileSync(
+                path.join(__dirname, "..", "html", "error-no-code.html"),
+                "utf8",
+              );
               res.end(html);
             }
-            throw new Error('No authorization code received');
+            throw new Error("No authorization code received");
           }
 
           if (!res.headersSent) {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            const html = fs.readFileSync(path.join(__dirname, '..', 'html', 'success.html'), 'utf8');
+            res.writeHead(200, { "Content-Type": "text/html" });
+            const html = fs.readFileSync(
+              path.join(__dirname, "..", "html", "success.html"),
+              "utf8",
+            );
             res.end(html);
           }
 
@@ -150,9 +164,9 @@ const googleProvider: AuthProvider = {
         } else {
           if (!res.headersSent) {
             res.writeHead(404);
-            res.end('Not found');
+            res.end("Not found");
           }
-          throw new Error('Not found');
+          throw new Error("Not found");
         }
       });
 
@@ -163,31 +177,31 @@ const googleProvider: AuthProvider = {
 
       return { success: true, tokens };
     } catch (error: any) {
-      ctx.logger.error('Google auth error:', error);
+      ctx.logger.error("Google auth error:", error);
       return {
         success: false,
-        error: error?.message || 'Unknown error occurred',
+        error: error?.message || "Unknown error occurred",
       };
     }
-  }
+  },
 };
 
 // Auto-register on import
-registerAuthProvider(googleProvider);
+register(googleProvider);
 
 export default googleProvider;
 
-export function createApiClient(tokens: TokenData, config: AuthProviderConfig) {
+export function createApiClient(tokens: Auth.Info, config: AuthProviderConfig) {
   const client = createGoogleClient(config);
   client.setCredentials({
     access_token: tokens.access,
     refresh_token: tokens.refresh,
   });
-  return google.calendar({ version: 'v3', auth: client });
+  return google.calendar({ version: "v3", auth: client });
 }
 
 // Legacy export for backward compatibility
-export function createCalendarClient(token: TokenData) {
+export function createCalendarClient(token: Auth.Info) {
   return createApiClient(token, {
     clientId: CLIENT_ID,
     redirectUri: "http://localhost:3000/auth/google/callback",
@@ -195,3 +209,40 @@ export function createCalendarClient(token: TokenData) {
   });
 }
 
+export function extractAccountInfo(tokens: any, provider: string): any {
+  let email = "unknown@example.com";
+  let name: string | undefined;
+  let picture: string | undefined;
+  let id: string;
+
+  if (provider === "google" && tokens.access) {
+    // Decode the ID token (JWT) to extract user info
+    try {
+      const parts = tokens.idToken.split(".");
+      if (parts.length === 3 && parts[1]) {
+        const payload = JSON.parse(
+          Buffer.from(parts[1], "base64url").toString(),
+        );
+        email = payload.email || email;
+        name = payload.name;
+        picture = payload.picture;
+        id = payload.sub || email;
+      } else {
+        id = email;
+      }
+    } catch (error) {
+      console.warn("Failed to decode ID token:", error);
+      id = email;
+    }
+  } else {
+    id = email;
+  }
+
+  return {
+    id,
+    email,
+    name,
+    picture,
+    provider,
+  };
+}

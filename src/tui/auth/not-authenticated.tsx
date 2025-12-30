@@ -1,16 +1,18 @@
-import { useTheme } from "./theme"
+import { useTheme } from "@tui/context/theme";
 
 export function NotAuthenticated() {
-  const { theme } = useTheme()
-  
+  const { theme } = useTheme();
+
   return (
-    <box flexDirection="column" alignItems="center" padding={2}>
+    <box flexDirection="column" flexGrow={1} alignItems="center" padding={2}>
       <text fg={theme.textMuted}>Not Authenticated</text>
       <box paddingTop={1}>
         <text>To use OpenCal, please authenticate:</text>
       </box>
       <box paddingTop={1}>
-        <text fg={theme.primary}>Press ctrl+p and select "Authenticate with Google"</text>
+        <text fg={theme.primary}>
+          Press ctrl+p and select "Add Google Account"
+        </text>
       </box>
       <box paddingTop={1}>
         <text fg={theme.textMuted}>or via CLI:</text>
@@ -22,5 +24,5 @@ export function NotAuthenticated() {
         <text fg={theme.textMuted}>Press ctrl+c to quit</text>
       </box>
     </box>
-  )
+  );
 }

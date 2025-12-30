@@ -3,12 +3,12 @@ import { CalendarViewType } from "../../models";
 import { useTheme } from "../context/theme";
 
 const views = [
-  { type: CalendarViewType.Month, shortcut: 'm', label: 'onth' },
-  { type: CalendarViewType.Week, shortcut: 'w', label: 'eek' },
-  { type: CalendarViewType.Day, shortcut: 'd', label: 'ay' },
+  { type: CalendarViewType.Month, shortcut: "m", label: "onth" },
+  { type: CalendarViewType.Week, shortcut: "w", label: "eek" },
+  { type: CalendarViewType.Day, shortcut: "d", label: "ay" },
 ] as const;
 
-const ViewSelector = (props: { currentViewMode: CalendarViewType }) => {
+export const ViewSelector = (props: { currentViewMode: CalendarViewType }) => {
   const { theme } = useTheme();
 
   return (
@@ -18,11 +18,14 @@ const ViewSelector = (props: { currentViewMode: CalendarViewType }) => {
           const isActive = () => props.currentViewMode === view.type;
           return (
             <box flexDirection="row">
-              <box backgroundColor={
-                isActive()
-                ? theme.primary
-                : theme.backgroundPanel}>
-                <text fg={isActive() ? theme.border : theme.primary }>{view.shortcut}</text>
+              <box
+                backgroundColor={
+                  isActive() ? theme.primary : theme.backgroundPanel
+                }
+              >
+                <text fg={isActive() ? theme.border : theme.primary}>
+                  {view.shortcut}
+                </text>
               </box>
               <box backgroundColor={theme.background}>
                 <text>{view.label}</text>
@@ -34,5 +37,3 @@ const ViewSelector = (props: { currentViewMode: CalendarViewType }) => {
     </box>
   );
 };
-
-export default ViewSelector;

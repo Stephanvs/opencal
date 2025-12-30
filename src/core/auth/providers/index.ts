@@ -1,20 +1,20 @@
-import type { TokenData } from '../types';
+import type { Auth } from "@core/account";
 
 export interface AuthProviderConfig {
   clientId: string;
-  clientSecret?: string; // if needed for some flows
+  clientSecret?: string;
   redirectUri: string;
   scopes: string[];
   // place for provider-specific options if you need them later
   [key: string]: unknown;
 }
 
-export type AuthProviderId = string
-
 export interface AuthProviderContext {
   // shared tools so providers don't import impl details ad-hoc
   openBrowser: (url: string) => Promise<void>;
-  waitForOAuthCallback: <T>(handler: (req: any, res: any) => T | Promise<T>) => Promise<T>;
+  waitForOAuthCallback: <T>(
+    handler: (req: any, res: any) => T | Promise<T>,
+  ) => Promise<T>;
   logger: {
     info: (...args: any[]) => void;
     error: (...args: any[]) => void;
@@ -22,7 +22,7 @@ export interface AuthProviderContext {
 }
 
 export interface AuthProvider {
-  id: AuthProviderId;
+  id: Auth.ProviderId;
   label: string; // for CLI display
   // Default scopes if user doesn't override
   defaultScopes: string[];
@@ -30,43 +30,52 @@ export interface AuthProvider {
   defaultConfig: AuthProviderConfig;
 
   // Generate auth URL, possibly using openauth
-  getAuthorizationUrl(config: AuthProviderConfig, opts: {
-    state: string;
-    codeChallenge?: string;
-  }): Promise<string>;
+  getAuthorizationUrl(
+    config: AuthProviderConfig,
+    opts: {
+      state: string;
+      codeChallenge?: string;
+    },
+  ): Promise<string>;
 
-  // Handle callback -> TokenData using openauth
-  exchangeCodeForTokens(config: AuthProviderConfig, input: {
-    code: string;
-    codeVerifier?: string;
-  }): Promise<TokenData>;
+  exchangeCodeForTokens(
+    config: AuthProviderConfig,
+    input: {
+      code: string;
+      codeVerifier?: string;
+    },
+  ): Promise<Auth.Info>;
 
   // Refresh tokens if supported
-  refreshTokens?(config: AuthProviderConfig, tokens: TokenData): Promise<TokenData>;
+  refreshTokens?(
+    config: AuthProviderConfig,
+    tokens: Auth.Info,
+  ): Promise<Auth.Info>;
 
   // High-level flow used by CLI (wrapper that uses above plus shared oauth-flow)
-  authorize(config: AuthProviderConfig, ctx: AuthProviderContext): Promise<{
+  authorize(
+    config: AuthProviderConfig,
+    ctx: AuthProviderContext,
+  ): Promise<{
     success: boolean;
-    tokens?: TokenData;
+    tokens?: Auth.Info;
     error?: string;
   }>;
 }
 
-// Registry
-const registry = new Map<AuthProviderId, AuthProvider>();
+const registry = new Map<Auth.ProviderId, AuthProvider>();
 
-export function registerAuthProvider(provider: AuthProvider) {
+export function register(provider: AuthProvider) {
   if (registry.has(provider.id)) {
     throw new Error(`Auth provider '${provider.id}' already registered`);
   }
   registry.set(provider.id, provider);
 }
 
-// For CLI / app usage
-export function getAuthProvider(id: AuthProviderId): AuthProvider | undefined {
+export function get(id: Auth.ProviderId): AuthProvider | undefined {
   return registry.get(id);
 }
 
-export function listAuthProviders(): AuthProvider[] {
+export function list(): AuthProvider[] {
   return Array.from(registry.values());
 }

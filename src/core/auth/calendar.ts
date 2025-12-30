@@ -1,20 +1,11 @@
-/**
- * Google Calendar API Client
- *
- * Provides functions to interact with Google Calendar API.
- */
+import type { Auth } from "@core/auth";
+import { createCalendarClient } from "./providers/google";
 
-import type { TokenData } from './types';
-import { createCalendarClient } from './providers/google';
-
-/**
- * Fetch calendar events for a given time range
- */
 export async function fetchCalendarEvents(
-  token: TokenData,
-  calendarId: string = 'primary',
+  token: Auth.Info,
+  calendarId: string = "primary",
   timeMin: Date,
-  timeMax: Date
+  timeMax: Date,
 ) {
   const calendar = createCalendarClient(token);
 
@@ -24,27 +15,24 @@ export async function fetchCalendarEvents(
       timeMin: timeMin.toISOString(),
       timeMax: timeMax.toISOString(),
       singleEvents: true,
-      orderBy: 'startTime',
+      orderBy: "startTime",
     });
 
     return response.data.items || [];
   } catch (error) {
-    console.error('Error fetching calendar events:', error);
+    console.error("Error fetching calendar events:", error);
     throw error;
   }
 }
 
-/**
- * Get list of calendars
- */
-export async function fetchCalendars(token: TokenData) {
+export async function fetchCalendars(token: Auth.Info) {
   const calendar = createCalendarClient(token) as any;
 
   try {
     const response = await calendar.calendarList.list();
     return response.data.items || [];
   } catch (error) {
-    console.error('Error fetching calendars:', error);
+    console.error("Error fetching calendars:", error);
     throw error;
   }
 }

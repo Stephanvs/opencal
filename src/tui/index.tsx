@@ -1,19 +1,18 @@
-import { createEffect, Match, Switch } from "solid-js"
-import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
-import { TextAttributes } from "@opentui/core"
-import { RouteProvider, useRoute } from "./context/route"
-import { Home } from "./home"
-import { ThemeProvider, useTheme } from "./context/theme"
-import { DialogProvider, useDialog } from "./components/dialog"
-import { AuthProvider, useAuth } from "./context/auth"
-import { CommandProvider, useCommandDialog } from "./components/dialog-command"
-import { NotAuthenticated } from "./context/not-authenticated"
-import { KeybindProvider } from "./context/keybind"
-import { AuthProviders } from "@core/auth/providers/context"
-import { listAuthProviders } from "@core/auth/providers"
-import { openBrowser, waitForOAuthCallback } from "@core/auth/oauth-flow"
-import logger from "@core/logger"
-import { Toast, ToastProvider, useToast } from "./ui/toast"
+import { TextAttributes } from "@opentui/core";
+import { render, useRenderer, useTerminalDimensions } from "@opentui/solid";
+import { createEffect, Match, Switch } from "solid-js";
+import { openBrowser, waitForOAuthCallback } from "@core/auth/oauth-flow";
+import { list } from "@core/auth/providers";
+import { AuthProviders } from "@core/auth/providers/context";
+import logger from "@core/logger";
+import { AuthProvider, NotAuthenticated, useAuth } from "./auth";
+import { DialogProvider, useDialog } from "./dialog/dialog";
+import { CommandProvider, useCommandDialog } from "./dialog/dialog-command";
+import { KeybindProvider } from "./keyboard/keybind-context";
+import { RouteProvider, useRoute } from "./context/route";
+import { ThemeProvider, useTheme } from "./context/theme";
+import { Home } from "./home";
+import { Toast, ToastProvider, useToast } from "./toast";
 import "opentui-spinner/solid";
 
 render(
@@ -39,35 +38,27 @@ render(
   {
     targetFps: 60,
     gatherStats: false,
-    useKittyKeyboard: { },
+    useKittyKeyboard: {},
     consoleOptions: {
       titleBarColor: "#cc33ff",
     },
   },
-)
+);
 
 function App() {
-  const auth = useAuth()
-  const route = useRoute()
-  const dimensions = useTerminalDimensions()
-  const renderer = useRenderer()
-  const dialog = useDialog()
-  const command = useCommandDialog()
-  const toast = useToast()
-  const { theme, all, selected, mode, set, toggleMode } = useTheme()
-
-  useKeyboard(async (evt) => {
-    if (evt.name === "`") {
-      renderer.console.toggle()
-      return
-    }
-  })
+  const auth = useAuth();
+  const route = useRoute();
+  const dimensions = useTerminalDimensions();
+  const renderer = useRenderer();
+  const dialog = useDialog();
+  const command = useCommandDialog();
+  const toast = useToast();
+  const { theme, all, selected, mode, set, toggleMode } = useTheme();
 
   createEffect(() => {
-    logger.info(JSON.stringify(route.data))
-  })
+    logger.info(JSON.stringify(route.data));
+  });
 
-  // Register commands based on auth state
   command.register(() => [
     {
       title: "Add Google Account",
@@ -86,38 +77,40 @@ function App() {
             <spinner name="dots" color={theme.primary} />
             <text marginLeft={1}>Waiting for browser...</text>
           </box>
-        ))
+        ));
 
         try {
-          const providers = listAuthProviders()
-          const provider = providers.find(p => p.id === 'google')
+          const providers = list();
+          const provider = providers.find((p) => p.id === "google");
           if (!provider) {
-            throw new Error('Google provider not found')
+            throw new Error("Google provider not found");
           }
 
           const result = await provider.authorize(provider.defaultConfig, {
             openBrowser,
             waitForOAuthCallback,
             logger,
-          })
+          });
 
           if (result.success && result.tokens) {
-            auth.google_login(result.tokens)
-            dialog.clear()
-            toast.success("Successfully authenticated with Google!")
+            auth.login(result.tokens, "google");
+            dialog.clear();
+            toast.success("Successfully authenticated with Google!");
           } else {
-            logger.error("OAuth failed:", result.error)
-            dialog.clear()
-            toast.error(new Error(result.error ?? "OAuth authentication failed"))
+            logger.error("OAuth failed:", result.error);
+            dialog.clear();
+            toast.error(
+              new Error(result.error ?? "OAuth authentication failed"),
+            );
           }
         } catch (error) {
-          logger.error("OAuth error:", error)
-          dialog.clear()
-          toast.error(error)
+          logger.error("OAuth error:", error);
+          dialog.clear();
+          toast.error(error);
         }
       },
-    }
-  ])
+    },
+  ]);
 
   if (auth.data.type !== "unauthorized") {
     command.register(() => [
@@ -126,15 +119,14 @@ function App() {
         value: "auth_logout",
         category: "Accounts",
         onSelect: () => {
-          auth.logout()
-          dialog.clear()
-          toast.info("You have been logged out")
-        }
-      }
-    ])
+          auth.logout();
+          dialog.clear();
+          toast.info("You have been logged out");
+        },
+      },
+    ]);
   }
 
-  // System commands (always available)
   command.register(() => [
     {
       title: "Quit",
@@ -142,7 +134,7 @@ function App() {
       value: "app_quit",
       category: "System",
       onSelect: () => {
-        process.exit(0)
+        process.exit(0);
       },
     },
     {
@@ -150,8 +142,8 @@ function App() {
       value: "app_debug",
       category: "System",
       onSelect: () => {
-        renderer.toggleDebugOverlay()
-        dialog.clear()
+        renderer.toggleDebugOverlay();
+        dialog.clear();
       },
     },
     {
@@ -159,22 +151,20 @@ function App() {
       value: "app_console",
       category: "System",
       onSelect: () => {
-        renderer.console.toggle()
-        dialog.clear()
+        renderer.console.toggle();
+        dialog.clear();
       },
     },
+  ]);
 
-  ])
-
-  // Theme commands
   command.register(() => [
     ...all().map((themeName) => ({
       title: `Theme: ${themeName}${selected === themeName ? " (active)" : ""}`,
       value: `theme_${themeName}`,
       category: "Appearance",
       onSelect: () => {
-        set(themeName)
-        dialog.clear()
+        set(themeName);
+        dialog.clear();
       },
     })),
     {
@@ -182,14 +172,18 @@ function App() {
       value: "theme_toggle_mode",
       category: "Appearance",
       onSelect: () => {
-        toggleMode()
-        dialog.clear()
+        toggleMode();
+        dialog.clear();
       },
     },
-  ])
+  ]);
 
   return (
-    <box width={dimensions().width} backgroundColor={theme.background}>
+    <box
+      width={dimensions().width}
+      backgroundColor={theme.background}
+      flexGrow={1}
+    >
       <box flexDirection="column" flexGrow={1}>
         <Switch>
           <Match when={auth.data.type === "unauthorized"}>
@@ -216,9 +210,8 @@ function App() {
             paddingRight={1}
           >
             <text fg={theme.textMuted}>open</text>
-            <text attributes={TextAttributes.BOLD}>cal </text>
+            <text attributes={TextAttributes.BOLD}>cal</text>
           </box>
-
         </box>
         <box flexDirection="row">
           <text paddingRight={1} fg={theme.textMuted}>
@@ -227,8 +220,7 @@ function App() {
         </box>
       </box>
 
-      {/* Toast notifications */}
       <Toast />
     </box>
-  )
+  );
 }
