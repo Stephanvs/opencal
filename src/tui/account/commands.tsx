@@ -1,24 +1,17 @@
-import { onMount } from "solid-js";
-import { Auth } from "@core/account";
 import { useDialog } from "@tui/dialog/dialog";
 import { useCommandDialog } from "@tui/dialog/dialog-command";
 import { DialogSelect } from "@tui/dialog/dialog-select";
+import { useProvider } from "@tui/provider";
 
-export async function AccountCommands() {
+export function AccountCommands() {
   const command = useCommandDialog();
   const dialog = useDialog();
+  const provider = useProvider();
 
-  // const accounts = await createMemo(() => Auth.all());
-  onMount(async () => {
-    const all = await Auth.all();
-  });
-  
-  
-
-  // List Accounts command - only visible when accounts exist
+  // List Accounts command - only visible when providers exist
   command.register(() => {
-    const current = await accounts();
-    if (current.length === 0) return [];
+    const providers = provider.providers();
+    if (providers.length === 0) return [];
 
     return [
       {
@@ -28,11 +21,11 @@ export async function AccountCommands() {
         onSelect: () => {
           dialog.replace(() => (
             <DialogSelect
-              title="Signed In Accounts"
-              options={current.map((account) => ({
-                title: account.email,
-                description: account.provider,
-                value: account.email,
+              title="Connected Accounts"
+              options={providers.map((p) => ({
+                title: `${p.name}: ${p.id}`,
+                description: p.enabled ? "Enabled" : "Disabled",
+                value: p.id,
               }))}
               onSelect={() => dialog.clear()}
             />

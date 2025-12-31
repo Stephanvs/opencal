@@ -1,39 +1,44 @@
+import { createEffect, Match, Switch } from "solid-js";
+
 import { TextAttributes } from "@opentui/core";
 import { render, useRenderer, useTerminalDimensions } from "@opentui/solid";
-import { createEffect, Match, Switch } from "solid-js";
-import { openBrowser, waitForOAuthCallback } from "@core/auth/oauth-flow";
-import { list } from "@core/auth/providers";
-import { AuthProviders } from "@core/auth/providers/context";
-import logger from "@core/logger";
-import { AuthProvider, NotAuthenticated, useAuth } from "./auth";
-import { DialogProvider, useDialog } from "./dialog/dialog";
-import { CommandProvider, useCommandDialog } from "./dialog/dialog-command";
-import { KeybindProvider } from "./keyboard/keybind-context";
+
+import { logger } from "@core/logger";
+import { Registry } from "@core/provider";
+import { googleFactory } from "@core/provider/google";
+
+import { NotAuthenticated } from "./auth";
 import { RouteProvider, useRoute } from "./context/route";
 import { ThemeProvider, useTheme } from "./context/theme";
+import { DialogProvider, useDialog } from "./dialog/dialog";
+import { CommandProvider, useCommandDialog } from "./dialog/dialog-command";
 import { Home } from "./home";
+import { KeybindProvider } from "./keyboard/keybind-context";
+import { ProviderProvider, useProvider } from "./provider";
 import { Toast, ToastProvider, useToast } from "./toast";
+
 import "opentui-spinner/solid";
+
+// Register providers
+Registry.register(googleFactory);
 
 render(
   () => (
-    <AuthProviders>
-      <ThemeProvider mode="dark">
-        <AuthProvider>
-          <RouteProvider>
-            <KeybindProvider>
-              <ToastProvider>
-                <DialogProvider>
-                  <CommandProvider>
-                    <App />
-                  </CommandProvider>
-                </DialogProvider>
-              </ToastProvider>
-            </KeybindProvider>
-          </RouteProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </AuthProviders>
+    <ThemeProvider mode="dark">
+      <ProviderProvider>
+        <RouteProvider>
+          <KeybindProvider>
+            <ToastProvider>
+              <DialogProvider>
+                <CommandProvider>
+                  <App />
+                </CommandProvider>
+              </DialogProvider>
+            </ToastProvider>
+          </KeybindProvider>
+        </RouteProvider>
+      </ProviderProvider>
+    </ThemeProvider>
   ),
   {
     targetFps: 60,
@@ -46,7 +51,7 @@ render(
 );
 
 function App() {
-  const auth = useAuth();
+  const provider = useProvider();
   const route = useRoute();
   const dimensions = useTerminalDimensions();
   const renderer = useRenderer();
@@ -59,10 +64,11 @@ function App() {
     logger.info(JSON.stringify(route.data));
   });
 
-  command.register(() => [
-    {
-      title: "Add Google Account",
-      value: "auth_google_login",
+  // Register "Add {Provider} Account" commands for each factory
+  command.register(() =>
+    Registry.list().map((factory) => ({
+      title: `Add ${factory.name} Account`,
+      value: `add_provider_${factory.name.toLowerCase()}`,
       category: "Accounts",
       suggested: true,
       onSelect: async () => {
@@ -80,52 +86,39 @@ function App() {
         ));
 
         try {
-          const providers = list();
-          const provider = providers.find((p) => p.id === "google");
-          if (!provider) {
-            throw new Error("Google provider not found");
-          }
+          const success = await provider.addProvider(factory.name);
+          dialog.clear();
 
-          const result = await provider.authorize(provider.defaultConfig, {
-            openBrowser,
-            waitForOAuthCallback,
-            logger,
-          });
-
-          if (result.success && result.tokens) {
-            auth.login(result.tokens, "google");
-            dialog.clear();
-            toast.success("Successfully authenticated with Google!");
+          if (success) {
+            toast.success(`Successfully added ${factory.name} account!`);
           } else {
-            logger.error("OAuth failed:", result.error);
-            dialog.clear();
-            toast.error(
-              new Error(result.error ?? "OAuth authentication failed"),
-            );
+            toast.error(new Error(`Failed to add ${factory.name} account`));
           }
         } catch (error) {
-          logger.error("OAuth error:", error);
+          logger.error("Provider add error:", error);
           dialog.clear();
           toast.error(error);
         }
       },
-    },
-  ]);
+    })),
+  );
 
-  if (auth.data.type !== "unauthorized") {
-    command.register(() => [
-      {
-        title: "Logout",
-        value: "auth_logout",
-        category: "Accounts",
-        onSelect: () => {
-          auth.logout();
-          dialog.clear();
-          toast.info("You have been logged out");
-        },
+  // Register logout commands for each connected provider
+  command.register(() => {
+    const providers = provider.providers();
+    if (providers.length === 0) return [];
+
+    return providers.map((p) => ({
+      title: `Remove ${p.name} Account (${p.id})`,
+      value: `remove_provider_${p.id}`,
+      category: "Accounts",
+      onSelect: async () => {
+        await provider.removeProvider(p.id);
+        dialog.clear();
+        toast.info(`Removed ${p.name} account`);
       },
-    ]);
-  }
+    }));
+  });
 
   command.register(() => [
     {
@@ -178,6 +171,8 @@ function App() {
     },
   ]);
 
+  const hasProviders = () => provider.providers().length > 0;
+
   return (
     <box
       width={dimensions().width}
@@ -186,7 +181,7 @@ function App() {
     >
       <box flexDirection="column" flexGrow={1}>
         <Switch>
-          <Match when={auth.data.type === "unauthorized"}>
+          <Match when={!hasProviders()}>
             <NotAuthenticated />
           </Match>
           <Match when={route.data.type === "home"}>

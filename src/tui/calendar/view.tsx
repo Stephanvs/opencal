@@ -1,33 +1,36 @@
+import { parseDate } from "chrono-node";
+import {
+  addDays,
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+} from "date-fns";
+import { For, createMemo } from "solid-js";
+
 import { TextAttributes } from "@opentui/core";
 import {
   useKeyboard,
   useRenderer,
   useTerminalDimensions,
 } from "@opentui/solid";
-import { For, createMemo, createResource } from "solid-js";
-import { useCalendar } from "../../useCalendar";
-import {
-  format,
-  addDays,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  startOfDay,
-  endOfDay,
-} from "date-fns";
-import { isSameDate } from "../../utils";
-import { ViewSelector } from "./view-selector";
-import { useAuth } from "../auth";
-import { fetchCalendars, fetchCalendarEvents } from "@core/auth/calendar";
+
+import { logger } from "@core/logger";
+import type { CalendarEvent } from "@core/provider";
+
 import { CalendarViewType } from "../../models";
-import logger from "@core/logger";
+import { useCalendar } from "../../useCalendar";
+import { isSameDate } from "../../utils";
 import { useTheme } from "../context/theme";
 import { useDialog } from "../dialog/dialog";
 import { useCommandDialog } from "../dialog/dialog-command";
 import { DialogPrompt } from "../dialog/dialog-prompt";
-import { parseDate } from "chrono-node";
+import { useProvider } from "../provider";
+import { ViewSelector } from "./view-selector";
 
 export function CalendarView() {
   const { headers, cursorDate, body, navigation, view } = useCalendar();
@@ -35,11 +38,11 @@ export function CalendarView() {
   const dimensions = useTerminalDimensions();
   const dialog = useDialog();
   const { theme } = useTheme();
+  const provider = useProvider();
 
   const formattedMonth = createMemo(() => format(cursorDate(), "MMM yyyy"));
   const formattedDate = createMemo(() => format(cursorDate(), "dd-MM-yyyy"));
 
-  const auth = useAuth();
   const command = useCommandDialog();
 
   command.register(() => [
@@ -139,35 +142,23 @@ export function CalendarView() {
     }
   });
 
-  const [events] = createResource(
-    () => ({
-      token: auth.data.type === "google" ? auth.data.token : null,
-      timeMin: timeMin(),
-      timeMax: timeMax(),
-    }),
-    async ({ token, timeMin, timeMax }) => {
-      if (!token) return [];
-      const cals = await fetchCalendars(token);
-      const allEvents = [];
-      for (const cal of cals) {
-        if (!cal.id) continue;
-        const evs = await fetchCalendarEvents(token, cal.id, timeMin, timeMax);
-        allEvents.push(...evs);
-      }
-      return allEvents;
-    },
-  );
+  const timeRange = createMemo(() => ({
+    start: timeMin(),
+    end: timeMax(),
+  }));
+
+  const events = provider.createEventsResource(timeRange);
 
   const eventsByDate = createMemo(() => {
-    const map = new Map();
-    for (const event of events() || []) {
-      if (!event.start) continue;
-      const dateStr =
-        event.start.date ||
-        (event.start.dateTime ? event.start.dateTime.split("T")[0] : null);
-      if (!dateStr) continue;
-      if (!map.has(dateStr)) map.set(dateStr, []);
-      map.get(dateStr).push(event);
+    const map = new Map<string, CalendarEvent[]>();
+    for (const event of events() ?? []) {
+      const dateStr = format(event.start, "yyyy-MM-dd");
+      const existing = map.get(dateStr);
+      if (existing) {
+        existing.push(event);
+      } else {
+        map.set(dateStr, [event]);
+      }
     }
     return map;
   });
@@ -298,7 +289,7 @@ export function CalendarView() {
                           each={
                             eventsByDate()
                               .get(format(day.value, "yyyy-MM-dd"))
-                              ?.slice(0, 3) || []
+                              ?.slice(0, 3) ?? []
                           }
                         >
                           {(event) => (

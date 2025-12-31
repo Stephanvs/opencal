@@ -1,24 +1,18 @@
+import fs from "node:fs";
 import {
   createServer,
-  IncomingMessage,
-  ServerResponse,
+  type IncomingMessage,
   type Server,
-} from "http";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-import logger from "@core/logger";
-import type { Auth } from "@core/account";
+  type ServerResponse,
+} from "node:http";
+import path from "node:path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { logger } from "@core/logger";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-export interface OAuthFlowResult {
-  success: boolean;
-  tokens?: Auth.Info;
-  error?: string;
-}
 
 export function waitForOAuthCallback<T>(
   cont: (
@@ -90,14 +84,14 @@ export async function openBrowser(url: string): Promise<void> {
   }
 
   try {
-    const { exec } = await import("child_process");
+    const { exec } = await import("node:child_process");
     await new Promise<void>((resolve, reject) => {
       exec(command, (error) => {
         if (error) reject(error);
         else resolve();
       });
     });
-  } catch (error) {
+  } catch {
     // Fail silently - user can copy URL manually
   }
 }
