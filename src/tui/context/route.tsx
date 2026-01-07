@@ -1,50 +1,50 @@
-import { createStore } from "solid-js/store"
-import { createContext, useContext, type ParentProps } from "solid-js"
-import logger from '@core/logger'
+import { createStore } from "solid-js/store";
+import { createContext, useContext, type ParentProps } from "solid-js";
+import { logger } from "@core/logger";
 
 type Route =
   | {
-      type: "home"
+      type: "home";
     }
   | {
-      type: "session"
-      sessionID: string
-    }
+      type: "session";
+      sessionID: string;
+    };
 
 function init() {
   const [store, setStore] = createStore<Route>({
     type: "home",
-  })
+  });
 
   return {
     get data() {
-      return store
+      return store;
     },
     navigate(route: Route) {
-      logger.debug("navigate", route)
-      setStore(route)
+      logger.debug("navigate", route);
+      setStore(route);
     },
-  }
+  };
 }
 
-export type RouteContext = ReturnType<typeof init>
+export type RouteContext = ReturnType<typeof init>;
 
-const ctx = createContext<RouteContext>()
+const ctx = createContext<RouteContext>();
 
 export function RouteProvider(props: ParentProps) {
-  const value = init()
-  return <ctx.Provider value={value}>{props.children}</ctx.Provider>
+  const value = init();
+  return <ctx.Provider value={value}>{props.children}</ctx.Provider>;
 }
 
 export function useRoute() {
-  const value = useContext(ctx)
+  const value = useContext(ctx);
   if (!value) {
-    throw new Error("useRoute must be used within a RouteProvider")
+    throw new Error("useRoute must be used within a RouteProvider");
   }
-  return value
+  return value;
 }
 
 export function useRouteData<T extends Route["type"]>(type: T) {
-  const route = useRoute()
-  return route.data as Extract<Route, { type: typeof type }>
+  const route = useRoute();
+  return route.data as Extract<Route, { type: typeof type }>;
 }
