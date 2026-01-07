@@ -13,7 +13,6 @@ import { openBrowser, waitForOAuthCallback } from "@core/auth/oauth-flow";
 import { logger } from "@core/logger";
 import type {
   CalendarEvent,
-  CalendarId,
   Provider,
   ProviderId,
   TimeRange,
@@ -25,10 +24,6 @@ interface ProviderContextValue {
   addProvider: (factoryName: string) => Promise<boolean>;
   removeProvider: (id: ProviderId) => Promise<void>;
   toggleProvider: (id: ProviderId) => Promise<void>;
-  toggleCalendar: (
-    providerId: ProviderId,
-    calendarId: CalendarId,
-  ) => Promise<void>;
   createEventsResource: (
     range: Accessor<TimeRange>,
   ) => Resource<CalendarEvent[]>;
@@ -86,21 +81,6 @@ function createProviderContext(): ProviderContextValue {
     }
   };
 
-  const toggleCalendar = async (
-    providerId: ProviderId,
-    calendarId: CalendarId,
-  ): Promise<void> => {
-    const provider = providers().find((p) => p.id === providerId);
-    if (!provider) return;
-
-    const calendars = await provider.getCalendars();
-    const calendar = calendars.find((c) => c.id === calendarId);
-    if (calendar) {
-      calendar.enabled = !calendar.enabled;
-      await Store.add(provider);
-    }
-  };
-
   const createEventsResource = (
     range: Accessor<TimeRange>,
   ): Resource<CalendarEvent[]> => {
@@ -133,7 +113,6 @@ function createProviderContext(): ProviderContextValue {
     addProvider,
     removeProvider,
     toggleProvider,
-    toggleCalendar,
     createEventsResource,
   };
 }

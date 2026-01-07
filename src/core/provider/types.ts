@@ -13,7 +13,6 @@ export interface Calendar {
   name: string;
   color?: string;
   primary?: boolean;
-  enabled: boolean;
 }
 
 export interface CalendarEvent {

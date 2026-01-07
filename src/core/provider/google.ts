@@ -8,7 +8,6 @@ import { logger } from "@core/logger";
 import type {
   Calendar,
   CalendarEvent,
-  CalendarId,
   InitContext,
   Provider,
   ProviderFactory,
@@ -42,7 +41,6 @@ interface GoogleConfig {
   id: string;
   name: string;
   enabled: boolean;
-  calendars: Record<CalendarId, { enabled: boolean }>;
   auth: GoogleAuth;
 }
 
@@ -61,18 +59,11 @@ class GoogleProvider implements Provider {
   id: string;
   enabled: boolean;
   private auth: GoogleAuth;
-  private calendarSettings: Record<CalendarId, { enabled: boolean }>;
 
-  constructor(
-    id: string,
-    auth: GoogleAuth,
-    enabled = true,
-    calendarSettings: Record<CalendarId, { enabled: boolean }> = {},
-  ) {
+  constructor(id: string, auth: GoogleAuth, enabled = true) {
     this.id = id;
     this.auth = auth;
     this.enabled = enabled;
-    this.calendarSettings = calendarSettings;
   }
 
   private async ensureValidToken(): Promise<string> {
@@ -213,7 +204,6 @@ class GoogleProvider implements Provider {
       name: cal.summary || "",
       color: cal.backgroundColor ?? undefined,
       primary: cal.primary || false,
-      enabled: this.calendarSettings[cal.id || ""]?.enabled ?? true,
     }));
   }
 
@@ -222,11 +212,9 @@ class GoogleProvider implements Provider {
     const client = this.createCalendarClient(token);
 
     const calendars = await this.getCalendars();
-    const enabledCalendars = calendars.filter((c) => c.enabled);
-
     const allEvents: CalendarEvent[] = [];
 
-    for (const calendar of enabledCalendars) {
+    for (const calendar of calendars) {
       const response = await client.events.list({
         calendarId: calendar.id,
         timeMin: range.start.toISOString(),
@@ -271,7 +259,6 @@ class GoogleProvider implements Provider {
       id: this.id,
       name: this.name,
       enabled: this.enabled,
-      calendars: this.calendarSettings,
       auth: this.auth,
     };
   }
@@ -286,7 +273,7 @@ const googleFactory: ProviderFactory = {
 
   fromConfig(config: unknown): Provider {
     const c = config as GoogleConfig;
-    return new GoogleProvider(c.id, c.auth, c.enabled, c.calendars);
+    return new GoogleProvider(c.id, c.auth, c.enabled);
   },
 };
 
