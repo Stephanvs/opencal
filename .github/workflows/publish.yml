@@ -1,0 +1,171 @@
+name: publish
+run-name: "${{ format('release {0}', inputs.bump || 'preview') }}"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Bump major, minor, or patch"
+        required: false
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      version:
+        description: "Override version (optional)"
+        required: false
+        type: string
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.version || inputs.bump }}
+
+permissions:
+  id-token: write
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: github.repository == 'Stephanvs/opencal'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: git fetch --force --tags
+
+      - uses: ./.github/actions/setup-bun
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup Git Identity
+        run: |
+          git config --global user.email "github@hayman.io"
+          git config --global user.name "opencal-bot"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Calculate Version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+            echo "channel=latest" >> $GITHUB_OUTPUT
+            echo "preview=false" >> $GITHUB_OUTPUT
+          elif [ -n "${{ inputs.bump }}" ]; then
+            # Get current version from package.json
+            CURRENT=$(jq -r .version package.json)
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT%%-*}"
+            
+            case "${{ inputs.bump }}" in
+              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+              patch) PATCH=$((PATCH + 1)) ;;
+            esac
+            
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "channel=latest" >> $GITHUB_OUTPUT
+            echo "preview=false" >> $GITHUB_OUTPUT
+          else
+            # Preview release based on commit SHA
+            CURRENT=$(jq -r .version package.json)
+            VERSION="${CURRENT}-preview.${GITHUB_SHA::7}"
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "channel=preview" >> $GITHUB_OUTPUT
+            echo "preview=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update Version in package.json
+        run: |
+          jq '.version = "${{ steps.version.outputs.version }}"' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+        env:
+          OPENCAL_VERSION: ${{ steps.version.outputs.version }}
+          OPENCAL_CHANNEL: ${{ steps.version.outputs.channel }}
+
+      - name: Publish to npm
+        run: bun run publish:npm
+        env:
+          OPENCAL_VERSION: ${{ steps.version.outputs.version }}
+          OPENCAL_CHANNEL: ${{ steps.version.outputs.channel }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencal-cli
+          path: dist
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      channel: ${{ steps.version.outputs.channel }}
+      preview: ${{ steps.version.outputs.preview }}
+
+  publish-release:
+    needs: publish
+    if: needs.publish.outputs.preview == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Setup Git Identity
+        run: |
+          git config --global user.email "opencal@github.com"
+          git config --global user.name "opencal"
+
+      - name: Setup SSH for AUR
+        if: env.AUR_SSH_KEY != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pacman-package-manager
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts || true
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: opencal-cli
+          path: dist
+
+      - name: Create Git Tag
+        run: |
+          git tag v${{ needs.publish.outputs.version }}
+          git push origin v${{ needs.publish.outputs.version }}
+
+      - name: Create GitHub Release
+        run: |
+          gh release create v${{ needs.publish.outputs.version }} \
+            --title "v${{ needs.publish.outputs.version }}" \
+            --generate-notes \
+            dist/*.zip dist/*.tar.gz
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to Registries (AUR + Homebrew)
+        run: bun run publish:registries
+        env:
+          OPENCAL_VERSION: ${{ needs.publish.outputs.version }}
+          OPENCAL_CHANNEL: latest
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
