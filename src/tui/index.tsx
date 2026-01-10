@@ -6,6 +6,7 @@ import { render, useRenderer, useTerminalDimensions } from "@opentui/solid";
 import { logger } from "@core/logger";
 import { Registry } from "@core/provider";
 import { googleFactory } from "@core/provider/google";
+import { microsoftFactory } from "@core/provider/microsoft";
 
 import { NotAuthenticated } from "./auth";
 import { RouteProvider, useRoute } from "./context/route";
@@ -21,6 +22,7 @@ import "opentui-spinner/solid";
 
 // Register providers
 Registry.register(googleFactory);
+Registry.register(microsoftFactory);
 
 render(
   () => (
